@@ -29,14 +29,26 @@
 class Client {
     
 public:
+       
+    //Ligações UDP com servidor central
+    int fd_udp_cs;                   
+    struct sockaddr_in addr_udp_cs;
+    struct in_addr *a_udp_cs;
+    socklen_t addrlen_udp_cs;
+    //Ligações TCP com servidor central
+    int fd_tcp_cs;
+    struct sockaddr_in addr_tcp_cs;
+    struct in_addr *a_tcp_cs;
+    socklen_t addrlen_tcp_cs;
+    //Ligações TCP com server storage
+    int fd_tcp_ss;
+    struct sockaddr_in addr_tcp_ss;
+    struct in_addr *a_tcp_ss;
+    socklen_t addrlen_tcp_ss;
+    
     char *host_name;
     int cs_port;
-    int fd_udp, fd_tcp;
     int connect_id, recieve_id;
-    struct sockaddr_in addr;
-    struct in_addr *a;
-    socklen_t addrlen;
-    
     char buffer[600];
     std::string input;
     
