@@ -8,6 +8,7 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 #include <arpa/inet.h>
 #include <sstream>
@@ -44,11 +45,15 @@ std::vector<std::string> Client::parse_files( std::vector<std::string> response 
     
     std::string command = response.back();
     response.pop_back();
-    //TODO: validar ip?
+
     std::string ip = response.back();
     response.pop_back();
+    this->ss_ip = ip;
+    
     std::string port = response.back();
     response.pop_back();
+    this->ss_port = atoi(port.c_str());
+    
     unsigned int num_files = atoi(response.back().c_str());
     response.pop_back();
     
