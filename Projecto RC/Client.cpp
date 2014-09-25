@@ -78,12 +78,12 @@ std::vector<std::string> Client::parse_response(char* buffer) {
 void Client::list() {
     
     // Enviar a mensagem para o servidor
-    connect_id=sendto(fd_udp, "LST\n", 4, 0, (struct sockaddr*)&addr, sizeof(addr));
+    connect_id=sendto(fd_udp_cs, "LST\n", 4, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
     if(connect_id==-1)
         exit(1);
     
-    addrlen=sizeof(addr);
-    recieve_id=recvfrom(fd_udp,buffer,600,0,(struct sockaddr*)&addr,&addrlen);
+    addrlen_udp_cs=sizeof(addr_udp_cs);
+    recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
     if(recieve_id==-1)
         exit(1);
     
@@ -107,6 +107,8 @@ void Client::list() {
 }
 
 void Client::connect() {
+    
+    // UDP connection to the Central Server
     fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
     if(fd_udp_cs==-1)
         exit(1);
@@ -117,7 +119,7 @@ void Client::connect() {
     addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
     addr_udp_cs.sin_port=htons(cs_port);
 
-    fd_tcp=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    /*fd_tcp=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
     if(fd_tcp==-1)
         exit(1);
     
@@ -125,5 +127,5 @@ void Client::connect() {
     addr.sin_family=AF_INET;
     a=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
     addr.sin_addr.s_addr = a->s_addr;
-    addr.sin_port=htons(cs_port);	
+    addr.sin_port=htons(cs_port);*/
 }
