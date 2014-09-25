@@ -102,7 +102,7 @@ void Client::list() {
 }
 
 void Client::connect() {
-    fd_udp=socket(AF_INET, SOCK_DGRAM, 0);
+    fd_udp=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
     if(fd_udp==-1)
         exit(1);
     
@@ -111,4 +111,14 @@ void Client::connect() {
     a=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
     addr.sin_addr.s_addr = a->s_addr;
     addr.sin_port=htons(cs_port);
+
+    fd_tcp=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    if(fd_tcp==-1)
+        exit(1);
+    
+    memset((void*)&addr,(int)'\0',sizeof(&addr));
+    addr.sin_family=AF_INET;
+    a=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
+    addr.sin_addr.s_addr = a->s_addr;
+    addr.sin_port=htons(cs_port);	
 }
