@@ -51,6 +51,8 @@ public:
     int connect_id, recieve_id;
     char buffer[600];
     std::string input;
+    int nbytes, nleft,nwritten, nread;
+    char *ptr;
     
 private:
     //Storage Server information
@@ -60,6 +62,7 @@ private:
 public:
     Client( char* hostname, int port ) : host_name(hostname), cs_port(port) {};
     void list();
+    void retrieve();
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> parse_response(char* buffer);
     void connect();

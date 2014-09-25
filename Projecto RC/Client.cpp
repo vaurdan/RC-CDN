@@ -106,6 +106,36 @@ void Client::list() {
     
 }
 
+//bool para dizer ao utilizador que ficheiro foi transferido?
+void Client::retrieve(){
+	
+	ptr=strcpy(buffer,"Nome do ficheiro \n"); //falta ler do IO o nome do ficheiro escolhido
+	nbytes=7;
+	
+	nleft=nbytes;
+	while(nleft<0){
+		nwritten=write(fd_tcp_cs,ptr,nleft);//se nao resultar usamos printf
+		if(nwritten<=0)
+			exit(1);
+		nleft-=nwritten;
+		ptr+=nwritten;
+		}
+	nleft=nbytes;
+	ptr=&buffer[0];
+	while(nleft>0){
+		nread=read(fd_tcp_cs,ptr,nleft);//se nao resultar usar scanf
+		if(nread==-1)
+		    exit(1);
+		else if(nread==0)
+			break;
+		nleft-=nread;
+		ptr+=nread;
+		}
+	nread=nbytes-nleft;
+	close(fd_tcp_cs);
+	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?
+	}
+
 void Client::connect() {
     
     // UDP connection to the Central Server
