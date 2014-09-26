@@ -49,11 +49,17 @@ int main(int argc, char *argv[]){
 			std::cout << "Listing...." << std::endl;
             client->list();
         } else if(in.front() == "retrieve") {
+			if(in.size() == 1)
+				std::cerr << "File name missing" << std::endl;
+				return 1;
 			std::cout << "Retrieving...." << std::endl;
 			std::cout << "File name found: " << in.back() << std::endl;
 			//client->retrieve(in.back());
 			}
 			else if(in.front() == "upload") {
+				if(in.size() == 1)
+					std::cerr << "File name missing" << std::endl;
+					return 1;
 				std::cout << "Uploading...." << std::endl;
 				std::cout << "File name found: " << in.back() << std::endl;
 				//client->upload(in.back());
