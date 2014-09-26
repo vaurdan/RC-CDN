@@ -44,11 +44,23 @@ int main(int argc, char *argv[]){
     
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
-        if(input == "list") {
+		std::vector<std::string> in = client->split(input,' ');
+        if(in.front() == "list") {
+			std::cout << "Listing...." << std::endl;
             client->list();
-        } else if(input == "exit") {
-            std::cout << "Bye!" << std::endl;
-            exit(1);
+        } else if(in.front() == "retrieve") {
+			std::cout << "Retrieving...." << std::endl;
+			std::cout << "File name found: " << in.back() << std::endl;
+			//client->retrieve(in.back());
+			}
+			else if(in.front() == "upload") {
+				std::cout << "Uploading...." << std::endl;
+				std::cout << "File name found: " << in.back() << std::endl;
+				//client->upload(in.back());
+				}
+				else if(in.front() == "exit") {
+					std::cout << "Bye!" << std::endl;
+					exit(1);
         }
         std::cout << "bwsh > ";
     }

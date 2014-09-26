@@ -71,8 +71,9 @@ std::vector<std::string> Client::parse_response(char* buffer) {
     std::string content(buffer);
     std::vector<std::string> elements = split(content,' ');
     
-    return parse_files(elements);
+    return parse_files(elements);  
 }
+	
 
 
 void Client::list() {
@@ -107,7 +108,7 @@ void Client::list() {
 }
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
-void Client::retrieve(){
+/*void Client::retrieve(std::vector<std::string> file_name){
 	
 	ptr=strcpy(buffer,"Nome do ficheiro \n"); //falta ler do IO o nome do ficheiro escolhido
 	nbytes=7;
@@ -134,7 +135,7 @@ void Client::retrieve(){
 	nread=nbytes-nleft;
 	close(fd_tcp_cs);
 	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?
-	}
+	}*/
 
 void Client::connect() {
     
@@ -151,7 +152,7 @@ void Client::connect() {
 
     // TCP connection to the Central Server
 
-    fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    /*fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
     if(fd_tcp_cs==-1)
         exit(1);
     
@@ -159,5 +160,5 @@ void Client::connect() {
     addr_tcp_cs.sin_family=AF_INET;
     a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
     addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
-    addr_tcp_cs.sin_port=htons(cs_port);
+    addr_tcp_cs.sin_port=htons(cs_port);*/
 }
