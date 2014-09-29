@@ -114,25 +114,19 @@ void Client::list() {
 //bool para dizer ao utilizador que ficheiro foi transferido?
 void Client::retrieve(std::string file_name){
 
-	std::cout << "ESTOU AQUI " << std::endl;
-
-	connect_id=sendto(fd_tcp_ss, "REQ ola.txt\n", 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+    std::string command = "REQ " + file_name + "\n";
+	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
 	std::cout << "retrieve com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
 
-	std::cout << "retrieve connect feito " << std::endl;	
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 	if(recieve_id ==-1)
 		exit(1);
 
-		std::cout << "retrieve reveive  feito " << std::endl;	
-
 	//FILE * pfile;
-
-	std::cout << "retrieve " << std::endl;
 	
 	
 
