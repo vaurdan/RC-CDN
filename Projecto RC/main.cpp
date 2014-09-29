@@ -33,14 +33,14 @@ int main(int argc, char *argv[]){
             }
             
         }
-        
+
     }
     
     //std::cout << host_name << ":"  << csport << std::endl;
     
     //Fazer a ligação ao servidor
     Client *client = new Client(host_name, cs_port);
-    client->connect();
+    client->connection();
     
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
@@ -49,12 +49,13 @@ int main(int argc, char *argv[]){
 			std::cout << "Listing...." << std::endl;
             client->list();
         } else if(in.front() == "retrieve") {
-			if(in.size() == 1)
+			if(in.size() == 1){
 				std::cerr << "File name missing" << std::endl;
 				return 1;
+			}
 			std::cout << "Retrieving...." << std::endl;
 			std::cout << "File name found: " << in.back() << std::endl;
-			//client->retrieve(in.back());
+			client->retrieve(in.back());
 			}
 			else if(in.front() == "upload") {
 				if(in.size() == 1)

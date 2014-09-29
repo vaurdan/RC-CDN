@@ -46,6 +46,7 @@ public:
     struct in_addr *a_tcp_ss;
     socklen_t addrlen_tcp_ss;
     
+    
     char *host_name;
     int cs_port;
     int connect_id, recieve_id;
@@ -56,16 +57,17 @@ public:
     
 private:
     //Storage Server information
-    std::string ss_ip;
+    char *ss_ip;
     int ss_port;
     
 public:
     Client( char* hostname, int port ) : host_name(hostname), cs_port(port) {};
     void list();
-    void retrieve();
+    void retrieve(std::string file_name);
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> parse_response(char* buffer);
-    void connect();
+    void connection();
+    void connectionSS();
     
 private:
     std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);

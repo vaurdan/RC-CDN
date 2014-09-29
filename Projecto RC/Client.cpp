@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <algorithm>
+#include <cstring>
 #include "Client.h"
 
 /*
@@ -48,7 +49,8 @@ std::vector<std::string> Client::parse_files( std::vector<std::string> response 
 
     std::string ip = response.back();
     response.pop_back();
-    this->ss_ip = ip;
+    this->ss_ip = new char[ip.length() + 1];
+    std::strcpy (this->ss_ip, ip.c_str());
     
     std::string port = response.back();
     response.pop_back();
@@ -99,7 +101,7 @@ void Client::list() {
     for (std::vector<std::string>::iterator it = resposta.begin(); it != resposta.end(); ++it) {
         std::cout << number++ << "\t" << *it << std::endl;
     }
-    
+    this->connectionSS();
     //Fechar as ligações
     close(recieve_id);
     close(connect_id);
@@ -108,9 +110,31 @@ void Client::list() {
 }
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
-/*void Client::retrieve(std::vector<std::string> file_name){
+void Client::retrieve(std::string file_name){
+
+	std::cout << "ESTOU AQUI " << std::endl;
+
+	connect_id=sendto(fd_tcp_ss, "REQ ola.txt\n", 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+	std::cout << "retrieve com " << connect_id << std::endl;	
+	if(connect_id==-1)
+		exit(1);
+
+
+	std::cout << "retrieve connect feito " << std::endl;	
+	addrlen_tcp_ss=sizeof(addr_tcp_ss);
+	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	if(recieve_id ==-1)
+		exit(1);
+
+		std::cout << "retrieve reveive  feito " << std::endl;	
+
+	//FILE * pfile;
+
+	std::cout << "retrieve " << std::endl;
 	
-	ptr=strcpy(buffer,"Nome do ficheiro \n"); //falta ler do IO o nome do ficheiro escolhido
+	
+
+/*ptr=strcpy(buffer,"Nome do ficheiro \n"); //falta ler do IO o nome do ficheiro escolhido
 	nbytes=7;
 	
 	nleft=nbytes;
@@ -134,10 +158,10 @@ void Client::list() {
 		}
 	nread=nbytes-nleft;
 	close(fd_tcp_cs);
-	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?
-	}*/
+	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?*/
+	}
 
-void Client::connect() {
+void Client::connection() {
     
     // UDP connection to the Central Server
     fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
@@ -152,7 +176,7 @@ void Client::connect() {
 
     // TCP connection to the Central Server
 
-    /*fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
     if(fd_tcp_cs==-1)
         exit(1);
     
@@ -160,5 +184,19 @@ void Client::connect() {
     addr_tcp_cs.sin_family=AF_INET;
     a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
     addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
-    addr_tcp_cs.sin_port=htons(cs_port);*/
+    addr_tcp_cs.sin_port=htons(cs_port);
 }
+
+void Client::connectionSS() {
+	
+	fd_tcp_ss=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    if(fd_tcp_ss==-1)
+        exit(1);
+    
+    memset((void*)&addr_tcp_ss,(int)'\0',sizeof(&addr_tcp_ss));
+    addr_tcp_ss.sin_family=AF_INET;
+    a_tcp_ss=(struct in_addr*)gethostbyname(this->ss_ip)->h_addr_list[0];
+    addr_tcp_ss.sin_addr.s_addr = a_tcp_ss->s_addr;
+    addr_tcp_ss.sin_port=htons(ss_port);
+	
+	}
