@@ -116,21 +116,23 @@ void Client::retrieve(std::string file_name){
 
     std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
-	std::cout << "retrieve com " << connect_id << std::endl;	
+	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-
+	std::cout << "Buffer: " << buffer << std::endl;
+	memset( buffer, 0, 600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
-
+	
+	std::cout << "Buffer: " << buffer << std::endl;
 	//FILE * pfile;
 	
 	
-
-/*ptr=strcpy(buffer,"Nome do ficheiro \n"); //falta ler do IO o nome do ficheiro escolhido
+    /*this->ptr=strcpy(buffer, file_name.c_str());
 	nbytes=7;
 	
 	nleft=nbytes;
@@ -155,6 +157,7 @@ void Client::retrieve(std::string file_name){
 	nread=nbytes-nleft;
 	close(fd_tcp_cs);
 	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?*/
+	
 	}
 
 void Client::connection() {

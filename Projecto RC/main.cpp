@@ -54,7 +54,7 @@ int main(int argc, char *argv[]){
 				return 1;
 			}
 			std::cout << "Retrieving...." << std::endl;
-			std::cout << "File name found: " << in.back() << std::endl;
+			//std::cout << "File name found: " << in.back() << std::endl;
 			client->retrieve(in.back());
 			}
 			else if(in.front() == "upload") {
