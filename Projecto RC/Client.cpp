@@ -194,6 +194,8 @@ void Client::connectionSS() {
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
     struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
+    memset(&host_info, 0, sizeof host_info);
+    
     host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
     host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
     
@@ -206,6 +208,8 @@ void Client::connectionSS() {
         exit(1);
     
     status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
+    
+    if(status == -1 ) exit(1);
     
     /*memset((void*)&addr_tcp_ss,(int)'\0',sizeof(&addr_tcp_ss));
     addr_tcp_ss.sin_family=AF_INET;
