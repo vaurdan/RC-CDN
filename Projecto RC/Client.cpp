@@ -54,7 +54,9 @@ std::vector<std::string> Client::parse_files( std::vector<std::string> response 
     
     std::string port = response.back();
     response.pop_back();
-    this->ss_port = atoi(port.c_str());
+    this->ss_port = new char[port.length() + 1];
+    std::strcpy (this->ss_port, port.c_str());
+    
     
     unsigned int num_files = atoi(response.back().c_str());
     response.pop_back();
@@ -188,15 +190,27 @@ void Client::connection() {
 }
 
 void Client::connectionSS() {
-	
-	fd_tcp_ss=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+    
+    struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+    struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+
+    host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
+    host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+    
+    int status = getaddrinfo(this->ss_ip, this->ss_port, &host_info, &host_info_list);
+    
+    fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
+               host_info_list->ai_protocol);//SOCKET do TCP
+    
     if(fd_tcp_ss==-1)
         exit(1);
     
-    memset((void*)&addr_tcp_ss,(int)'\0',sizeof(&addr_tcp_ss));
+    status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
+    
+    /*memset((void*)&addr_tcp_ss,(int)'\0',sizeof(&addr_tcp_ss));
     addr_tcp_ss.sin_family=AF_INET;
     a_tcp_ss=(struct in_addr*)gethostbyname(this->ss_ip)->h_addr_list[0];
     addr_tcp_ss.sin_addr.s_addr = a_tcp_ss->s_addr;
-    addr_tcp_ss.sin_port=htons(ss_port);
+    addr_tcp_ss.sin_port=htons(ss_port);*/
 	
 	}

@@ -58,7 +58,7 @@ public:
 private:
     //Storage Server information
     char *ss_ip;
-    int ss_port;
+    char *ss_port;
     
 public:
     Client( char* hostname, int port ) : host_name(hostname), cs_port(port) {};
