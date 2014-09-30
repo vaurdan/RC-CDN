@@ -116,48 +116,42 @@ void Client::retrieve(std::string file_name){
 
     std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
-	std::cout << "connect_id com " << connect_id << std::endl;	
+	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-	std::cout << "Buffer: " << buffer << std::endl;
+	//std::cout << "Buffer: " << buffer << std::endl;
 	memset( buffer, 0, 600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	std::cout << "recieve_id com " << recieve_id << std::endl;
+	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
 	std::cout << "Buffer: " << buffer << std::endl;
-	//FILE * pfile;
+	FILE *fn = fopen(file_name.c_str(), "a");
+	if(fn == NULL)
+		printf("File %s cannot be opened.\n", file_name.c_str());
+		else{
+			memset(buffer,0,600);
+			int fn_block_sz = 0;
+			while((fn_block_sz = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss))){
+				int write_sz = fwrite(buffer, sizeof(char), fn_block_sz, fn);
+				if(write_sz < fn_block_sz){
+					std::cerr << "File write failed." << std::endl;
+					}
+					memset(buffer,0,600);
+					if(fn_block_sz == 0 || fn_block_sz != 600)
+						break;
+					
+				}
+				fclose(fn);			
+			}
+			
+			close(fd_tcp_ss);
+				
 	
-	
-    /*this->ptr=strcpy(buffer, file_name.c_str());
-	nbytes=7;
-	
-	nleft=nbytes;
-	while(nleft<0){
-		nwritten=write(fd_tcp_cs,ptr,nleft);//se nao resultar usamos printf
-		if(nwritten<=0)
-			exit(1);
-		nleft-=nwritten;
-		ptr+=nwritten;
-		}
-	nleft=nbytes;
-	ptr=&buffer[0];
-	while(nleft>0){
-		nread=read(fd_tcp_cs,ptr,nleft);//se nao resultar usar scanf
-		if(nread==-1)
-		    exit(1);
-		else if(nread==0)
-			break;
-		nleft-=nread;
-		ptr+=nread;
-		}
-	nread=nbytes-nleft;
-	close(fd_tcp_cs);
-	write(1,buffer,nread);//resposta do servidor se o ficheiro foi adicionado, mudar para printf?*/
-	
+ 
 	}
 
 void Client::connection() {
