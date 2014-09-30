@@ -129,11 +129,13 @@ void Client::retrieve(std::string file_name){
 		exit(1);
 	
 	std::cout << "Buffer: " << buffer << std::endl;
-	FILE *fn = fopen(file_name.c_str(), "a");
+	FILE *fn = fopen(file_name.c_str(), "w");
 	if(fn == NULL)
-		printf("File %s cannot be opened.\n", file_name.c_str());
-		else{
-			memset(buffer,0,600);
+		memset(buffer,0,600);
+		std::size_t testBuffer = fwrite(buffer, sizeof(char), 600+1, fn);
+		if(testBuffer == 0){
+			fputs("Error reading file", stderr);
+			}else{
 			int fn_block_sz = 0;
 			while((fn_block_sz = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss))){
 				int write_sz = fwrite(buffer, sizeof(char), fn_block_sz, fn);
