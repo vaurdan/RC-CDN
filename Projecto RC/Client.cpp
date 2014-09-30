@@ -129,6 +129,13 @@ void Client::retrieve(std::string file_name){
 		exit(1);
 	
 	std::cout << "Buffer: " << buffer << std::endl;
+	
+	/*
+	 * 
+	 * 
+	 * 
+	 * falta aqui fazer uma verificação de se a resposta do buffer tiver nok então ficheiro nao existe e enviar mensagem de erro*/
+	 
 	FILE *fn = fopen(file_name.c_str(), "w");
 	if(fn == NULL)
 		memset(buffer,0,600);
@@ -154,6 +161,27 @@ void Client::retrieve(std::string file_name){
 				
 	
  
+	}
+	
+void Client::upload(std::string up_file_name){
+	
+	memset( buffer, 0, 600);	
+	std::string command = "UPR " + up_file_name + "\n";
+	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+	std::cout << "connect_id com " << connect_id << std::endl;	
+	if(connect_id==-1)
+		exit(1);
+
+	//std::cout << "Buffer: " << buffer << std::endl;
+	memset( buffer, 0, 600);
+	addrlen_tcp_ss=sizeof(addr_tcp_ss);
+	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	std::cout << "recieve_id com " << recieve_id << std::endl;
+	if(recieve_id ==-1)
+		exit(1);
+	
+	std::cout << "Buffer: " << buffer << std::endl;
+	
 	}
 
 void Client::connection() {

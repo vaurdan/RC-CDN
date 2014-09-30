@@ -58,12 +58,13 @@ int main(int argc, char *argv[]){
 			client->retrieve(in.back());
 			}
 			else if(in.front() == "upload") {
-				if(in.size() == 1)
+				if(in.size() == 1){
 					std::cerr << "File name missing" << std::endl;
 					return 1;
+				}
 				std::cout << "Uploading...." << std::endl;
-				std::cout << "File name found: " << in.back() << std::endl;
-				//client->upload(in.back());
+				//std::cout << "File name found: " << in.back() << std::endl;
+				client->upload(in.back());
 				}
 				else if(in.front() == "exit") {
 					std::cout << "Bye!" << std::endl;
