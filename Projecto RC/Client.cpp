@@ -128,8 +128,12 @@ void Client::retrieve(std::string file_name){
 	if(recieve_id ==-1)
 		exit(1);
 	
-	std::cout << "Buffer: " << buffer << std::endl;
+	//std::cout << "Buffer: " << buffer << std::endl;
 	
+	if(strcmp (buffer, "REP nok\n") == 0){
+		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
+		exit(0);		
+	}
 	/*
 	 * 
 	 * 
