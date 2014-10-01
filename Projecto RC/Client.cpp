@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <errno.h>
 #include "Client.h"
 
 /*
@@ -114,55 +115,93 @@ void Client::list() {
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
 void Client::retrieve(std::string file_name){
+	
+	
 
     std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
-	//std::cout << "connect_id com " << connect_id << std::endl;	
+	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
 	//std::cout << "Buffer: " << buffer << std::endl;
-	memset( buffer, 0, 600);
+	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	//std::cout << "recieve_id com " << recieve_id << std::endl;
+	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
-	//std::cout << "Buffer: " << buffer << std::endl;
+	std::cout << "Buffer: " << buffer << std::endl;
 	
 	if(strcmp (buffer, "REP nok\n") == 0){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		exit(0);		
 	}
 	
-	std::cout << "Vou iniciar a criação do ficheiro" << std::endl;
+	//stackoverflow.com/question/11952898/c-send-and-receive-file
+	int tamanho_ficheiro;
+	FILE *ficheiro_recebido;
+	int remain_data = 0;
+	ssize_t len;
+	
+	recv(fd_tcp_ss, buffer, 600, 0);
+	tamanho_ficheiro = atoi(buffer);
+	
+	ficheiro_recebido = fopen(file_name.c_str(), "w");
+	std::cout << "Iniciei criação do ficheiro" << std::endl;
+	if(ficheiro_recebido == NULL){
+		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
+		exit(EXIT_FAILURE);		
+		}
+	remain_data = tamanho_ficheiro;
+	
+	while((len = recv(fd_tcp_ss, buffer, 600, 0)) > 0 && (remain_data > 0)){
+		fwrite(buffer, sizeof(char), len, ficheiro_recebido);
+		remain_data -= len;
+		//fprintf(stdout, "Recebidos %l bytes e esperava :- %d bytes\n", len, remain_data);
+		
+		}
+		fclose(ficheiro_recebido);
+		
+	/*std::cout << "Vou iniciar a criação do ficheiro" << std::endl;
 	
 	std::ofstream outFile(file_name.c_str(), std::ios::out|std::ios::binary|std::ios::app);
 	int size = 600;
 	int n;
+	std::cout << "Vou iniciar a leitura do ficheiro" << std::endl;
 	while(size > 0){
 		
 		bzero(buffer,600);
+		std::cout << "entrei no ciclo e limpei buffer" << std::endl;
 		if(size >= 600){
 			
-			n = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-			
+			std::cout << "entrei no if com size: " << size << std::endl;
+			n = recv(fd_tcp_ss,buffer,600,0);
+			std::cout << "tou aqui!!" << std::endl;
+			std::cout << "n do if tem: " << n << std::endl;
 			outFile.write(buffer,n);
+			std::cout << "ja escrevi no if" << std::endl;
 			
 			}else{
 				
+				std::cout << "entrei no else com size: " << size << std::endl;
 				n = recvfrom(fd_tcp_ss,buffer,size,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+				std::cout << "n do else tem: " << n << std::endl;
 				buffer[size]='\0';
 				outFile.write(buffer,n);
+				std::cout << "ja escrevi no else" << std::endl;
 				}
 				
 				size -= 600;
+				std::cout << "Decrementei size" << size << std::endl;
 		
 		
 		}
 		
 		outFile.close();
+		std::cout << "Ficheiro carregado" << std::endl;*/
+
 	/*memset(buffer,0,600);
 	FILE *fn = fopen(file_name.c_str(), "a");
 	std::cout << "Abri o ficheiro: " << file_name.c_str() <<std::endl;
@@ -196,6 +235,15 @@ void Client::retrieve(std::string file_name){
 		close(fd_tcp_ss);
 				
 	*/
+		
+			
+	
+	
+	
+	
+	close(fd_tcp_ss);
+	
+	//return 0;
  
 	}
 	
@@ -267,11 +315,5 @@ void Client::connectionSS() {
     status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
     
     if(status == -1 ) exit(1);
-    
-    /*memset((void*)&addr_tcp_ss,(int)'\0',sizeof(&addr_tcp_ss));
-    addr_tcp_ss.sin_family=AF_INET;
-    a_tcp_ss=(struct in_addr*)gethostbyname(this->ss_ip)->h_addr_list[0];
-    addr_tcp_ss.sin_addr.s_addr = a_tcp_ss->s_addr;
-    addr_tcp_ss.sin_port=htons(ss_port);*/
 	
 	}
