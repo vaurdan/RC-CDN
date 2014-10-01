@@ -134,34 +134,29 @@ void Client::retrieve(std::string file_name){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		exit(0);		
 	}
-	/*
-	 * 
-	 * 
-	 * 
-	 * falta aqui fazer uma verificação de se a resposta do buffer tiver nok então ficheiro nao existe e enviar mensagem de erro*/
 	 
 	FILE *fn = fopen(file_name.c_str(), "w");
-	if(fn == NULL)
-		memset(buffer,0,600);
-		std::size_t testBuffer = fwrite(buffer, sizeof(char), 600+1, fn);
-		if(testBuffer == 0){
-			fputs("Error reading file", stderr);
-			}else{
-			int fn_block_sz = 0;
-			while((fn_block_sz = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss))){
-				int write_sz = fwrite(buffer, sizeof(char), fn_block_sz, fn);
-				if(write_sz < fn_block_sz){
-					std::cerr << "File write failed." << std::endl;
-					}
-					memset(buffer,0,600);
-					if(fn_block_sz == 0 || fn_block_sz != 600)
-						break;
-					
+	std::cout << "Vou iniciar a criação do ficheiro" << std::endl;
+	memset(buffer,0,600);
+	std::size_t testBuffer = fwrite(buffer, sizeof(char), 600+1, fn);
+	if(testBuffer == 0){
+		fputs("Error reading file", stderr);
+		}else{
+		int fn_block_sz = 0;
+		while((fn_block_sz = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss))){
+			int write_sz = fwrite(buffer, sizeof(char), fn_block_sz, fn);
+			if(write_sz < fn_block_sz){
+				std::cerr << "File write failed." << std::endl;
 				}
-				fclose(fn);			
+				memset(buffer,0,600);
+				if(fn_block_sz == 0 || fn_block_sz != 600)
+					break;
+				
 			}
-			
-			close(fd_tcp_ss);
+			fclose(fn);			
+		}
+		
+		close(fd_tcp_ss);
 				
 	
  
