@@ -14,6 +14,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include "Client.h"
 
 /*
@@ -134,12 +135,48 @@ void Client::retrieve(std::string file_name){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		exit(0);		
 	}
-	 
-	FILE *fn = fopen(file_name.c_str(), "w");
+	
 	std::cout << "Vou iniciar a criação do ficheiro" << std::endl;
-	memset(buffer,0,600);
-	std::size_t testBuffer = fwrite(buffer, sizeof(char), 600+1, fn);
-	if(testBuffer == 0){
+	
+	std::ofstream outFile(file_name.c_str(), std::ios::out|std::ios::binary|std::ios::app);
+	int size = 600;
+	int n;
+	while(size > 0){
+		
+		bzero(buffer,600);
+		if(size >= 600){
+			
+			n = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+			
+			outFile.write(buffer,n);
+			
+			}else{
+				
+				n = recvfrom(fd_tcp_ss,buffer,size,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+				buffer[size]='\0';
+				outFile.write(buffer,n);
+				}
+				
+				size -= 600;
+		
+		
+		}
+		
+		outFile.close();
+	/*memset(buffer,0,600);
+	FILE *fn = fopen(file_name.c_str(), "a");
+	std::cout << "Abri o ficheiro: " << file_name.c_str() <<std::endl;
+	if(fn == NULL){
+		std::cerr << "Não é possivel abrir o ficheiro" std::cout;
+	}else{
+		
+		
+		}
+	
+	
+	*/
+	//std::cout << buffer << std::endl;
+	/*if(buffer == 0){
 		fputs("Error reading file", stderr);
 		}else{
 		int fn_block_sz = 0;
@@ -158,7 +195,7 @@ void Client::retrieve(std::string file_name){
 		
 		close(fd_tcp_ss);
 				
-	
+	*/
  
 	}
 	
