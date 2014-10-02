@@ -42,7 +42,6 @@ int main(int argc, char *argv[]){
     
     //Fazer a ligação ao servidor
     Client *client = new Client(host_name, cs_port);
-    client->connection();
     
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
