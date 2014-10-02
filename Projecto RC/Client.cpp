@@ -115,6 +115,12 @@ void Client::list() {
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
 void Client::retrieve(std::string file_name){
+
+	int tamanho_ficheiro;
+	FILE *ficheiro_recebido;
+	int remain_data = 0;
+	ssize_t len;
+	int size_buffer;
 	
 	
 
@@ -137,16 +143,17 @@ void Client::retrieve(std::string file_name){
 	if(strcmp (buffer, "REP nok\n") == 0){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		exit(0);		
+	}else {
+		std::vector<std::string> size_buffer_response = split(buffer, ' ');
+		size_buffer =  atoi(size_buffer_response.back().c_str());
 	}
 	
 	//stackoverflow.com/question/11952898/c-send-and-receive-file
-	int tamanho_ficheiro;
-	FILE *ficheiro_recebido;
-	int remain_data = 0;
-	ssize_t len;
+	char file_buffer[size_buffer];
 	
-	recv(fd_tcp_ss, buffer, 600, 0);
-	tamanho_ficheiro = atoi(buffer);
+	
+	recv(fd_tcp_ss, file_buffer, 512, 0);
+	tamanho_ficheiro = size_buffer;
 	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
 	std::cout << "Iniciei criação do ficheiro" << std::endl;
@@ -156,8 +163,8 @@ void Client::retrieve(std::string file_name){
 		}
 	remain_data = tamanho_ficheiro;
 	
-	while((len = recv(fd_tcp_ss, buffer, 600, 0)) > 0 && (remain_data > 0)){
-		fwrite(buffer, sizeof(char), len, ficheiro_recebido);
+	while((len = recv(fd_tcp_ss, file_buffer, 300, 0)) > 0 && (remain_data > 0)){
+		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		remain_data -= len;
 		//fprintf(stdout, "Recebidos %l bytes e esperava :- %d bytes\n", len, remain_data);
 		
