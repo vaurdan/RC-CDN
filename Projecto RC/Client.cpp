@@ -113,7 +113,6 @@ void Client::list() {
 //bool para dizer ao utilizador que ficheiro foi transferido?
 void Client::retrieve(std::string file_name){
 
-	int tamanho_ficheiro;
 	FILE *ficheiro_recebido;
 	int remain_data = 0;
 	ssize_t len;
@@ -184,15 +183,13 @@ void Client::retrieve(std::string file_name){
 	file_size = atoi(size_buffer.c_str());
 	char file_buffer[file_size];
 	
-	tamanho_ficheiro = file_size;
-	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
 	//std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
 		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
 		exit(EXIT_FAILURE);		
     }
-	remain_data = tamanho_ficheiro;
+	remain_data = file_size;
 	
 	while((len = recvfrom(fd_tcp_ss,file_buffer,512,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
@@ -214,7 +211,6 @@ void Client::upload(std::string up_file_name){
 
 	//bzero(buffer,600);
     std::string command = "UPR " + up_file_name + "\n";
-    std::cout << "Comando: " << command << std::endl;
 	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
 	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
@@ -235,13 +231,13 @@ void Client::upload(std::string up_file_name){
 		return;
 	}
 	bzero(buffer,100);
-	//Leitura de ok ou nok
-	recieve_id=recvfrom(fd_tcp_cs,buffer,3,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	//Leitura de dup ou new
+	recieve_id=recvfrom(fd_tcp_cs,buffer,10,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
-	//std::cout << "Buffer: " << buffer << "." << std::endl;
+	std::cout << "Buffer: " << buffer << "." << std::endl;
 	}
 
 bool Client::connection() {
