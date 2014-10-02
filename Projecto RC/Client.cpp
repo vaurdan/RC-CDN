@@ -106,7 +106,7 @@ void Client::list() {
     for (std::vector<std::string>::iterator it = resposta.begin(); it != resposta.end(); ++it) {
         std::cout << number++ << "\t" << *it << std::endl;
     }
-    this->connectionSS();
+
     //Fechar as ligações
     close(recieve_id);
     close(connect_id);
@@ -124,6 +124,8 @@ void Client::retrieve(std::string file_name){
 	std::string size_buffer = "";
 	int file_size;
 	
+    // Inicializar a connecção ao socket.
+    this->connectionSS();
 	
 	//bzero(buffer,600);
     std::string command = "REQ " + file_name + "\n";
@@ -163,7 +165,12 @@ void Client::retrieve(std::string file_name){
 	bzero(buffer,100);
 	char letra;
 	
+    int contador = 0;
 	while (letra != ' '){
+        if(contador>100) {
+            std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
+            return;
+        }
 	
 		recieve_id=recvfrom(fd_tcp_ss,&letra,1,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 		if(letra == ' ')
@@ -171,6 +178,7 @@ void Client::retrieve(std::string file_name){
 		
 		size_buffer += letra;
 		std::cout << "letra: " << letra << std::endl;
+        contador++;
 	
 	}
 	
@@ -186,7 +194,7 @@ void Client::retrieve(std::string file_name){
 	if(ficheiro_recebido == NULL){
 		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
 		exit(EXIT_FAILURE);		
-		}
+    }
 	remain_data = tamanho_ficheiro;
 	
 	while((len = recvfrom(fd_tcp_ss,file_buffer,512,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
@@ -225,12 +233,12 @@ void Client::upload(std::string up_file_name){
 	
 	}
 
-void Client::connection() {
+bool Client::connection() {
     
     // UDP connection to the Central Server
     fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
     if(fd_udp_cs==-1)
-        exit(1);
+        return false;
     
     memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
     addr_udp_cs.sin_family=AF_INET;
@@ -242,16 +250,21 @@ void Client::connection() {
 
     fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
     if(fd_tcp_cs==-1)
-        exit(1);
+        return false;
     
     memset((void*)&addr_tcp_cs,(int)'\0',sizeof(&addr_tcp_cs));
     addr_tcp_cs.sin_family=AF_INET;
     a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
     addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
     addr_tcp_cs.sin_port=htons(cs_port);
+    
+    return true;
 }
 
-void Client::connectionSS() {
+bool Client::connectionSS() {
+    
+    if(this->ss_port == NULL || this->ss_ip == NULL)
+        return false;
     
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
     struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
@@ -267,10 +280,13 @@ void Client::connectionSS() {
                host_info_list->ai_protocol);//SOCKET do TCP
     
     if(fd_tcp_ss==-1)
-        exit(1);
+        return false;
     
     status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
     
-    if(status == -1 ) exit(1);
+    if(status == -1 )
+        return false;;
+    
+    return true;
 	
 	}
