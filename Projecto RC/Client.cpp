@@ -137,36 +137,32 @@ void Client::retrieve(std::string file_name){
     // Inicializar a connecção ao socket.
     this->connectionSS();
 	
-	//bzero(buffer,600);
     std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
 	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-	//std::cout << "Buffer: " << buffer << std::endl;
+    // Vamos ver se o comando está correcto
 	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	//std::cout << "recieve_id com " << recieve_id << std::endl;
-	if(recieve_id ==-1)
+
+    if(recieve_id ==-1)
 		exit(1);
 	
 	//Leitura do comando do servidor
-	//std::cout << "Buffer: " << buffer << std::endl;
 	if(strcmp (buffer, "ERR\n") == 0){
 		std::cerr << "Erro, pedido mal formulado" << std::endl;
 		return;
 	}
 	bzero(buffer,100);
-	//Leitura de ok ou nok
+
+    //Leitura de ok ou nok
 	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
-	//std::cout << "Buffer: " << buffer << "." << std::endl;
-
 	if(strcmp (buffer, "nok") == 0){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		return;		
@@ -187,10 +183,7 @@ void Client::retrieve(std::string file_name){
 			break;
 		
 		size_buffer += letra;
-
         contador++;
-
-	
 	}
 	
 	//std::cout << "size_buffer: " << size_buffer << std::endl;
@@ -210,13 +203,13 @@ void Client::retrieve(std::string file_name){
     setbuf(stdout, NULL);
     
     int i = 0;
-    float iterations = (tamanho_ficheiro + 1) / 128;
 
 	while((len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
-		remain_data -= len;
-		//fprintf(stdout, "Recebidos %l bytes e esperava :- %d bytes\n", len, remain_data);
-        loadbar(i++, iterations);
+        i += len;
+        remain_data -= len;
+        loadbar(i, tamanho_ficheiro);
+        
         }
 		fclose(ficheiro_recebido);
     std::cout << std::endl << " Done! " << std::endl;
