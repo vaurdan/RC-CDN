@@ -48,7 +48,7 @@ public:
     
     
     char *host_name;
-    int cs_port;
+    char *cs_port;
     int connect_id, recieve_id;
     char buffer[600];
     std::string input;
@@ -61,7 +61,7 @@ private:
     char *ss_port;
     
 public:
-    Client( char* hostname, int port ) : host_name(hostname), cs_port(port) {};
+    Client( char* hostname, char *port ) : host_name(hostname), cs_port(port) {};
     void list();
     void retrieve(std::string file_name);
     void upload(std::string up_file_name);

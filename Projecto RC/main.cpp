@@ -6,7 +6,7 @@
 int main(int argc, char *argv[]){
     
     char *host_name;
-    int cs_port;
+    char *cs_port;
     std::string input;
    
     if(argc == 1){
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
                 }
             }else if(std::string(argv[i]) == "-p"){
                 if(i+1 < argc){
-                    cs_port = atoi(argv[++i]);
+                    cs_port = argv[++i];
                 }else{
                     std::cerr << "erro" << std::endl;
                     return 1;

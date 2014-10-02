@@ -124,6 +124,7 @@ void Client::list() {
     close(connect_id);
     
     
+    
 }
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
@@ -214,9 +215,7 @@ void Client::retrieve(std::string file_name){
         }
 		fclose(ficheiro_recebido);
     std::cout << std::endl << " Done! " << std::endl;
-	//close(fd_tcp_ss);
 	
-	//return 0;
  
 	}
 	
@@ -227,16 +226,16 @@ void Client::upload(std::string up_file_name){
 	//bzero(buffer,600);
     std::string command = "UPR " + up_file_name + "\n";
 	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
-	//std::cout << "connect_id com " << connect_id << std::endl;	
+	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-	//std::cout << "Buffer: " << buffer << std::endl;
+	std::cout << "Buffer: " << buffer << std::endl;
 	bzero(buffer,600);
 	addrlen_tcp_cs=sizeof(addr_tcp_cs);
 	recieve_id=recvfrom(fd_tcp_cs,buffer,100,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	std::cout << "Buffer: " << buffer << std::endl;
-	//std::cout << "recieve_id com " << recieve_id << std::endl;
+	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
@@ -249,7 +248,7 @@ void Client::upload(std::string up_file_name){
 	bzero(buffer,100);
 	//Leitura de dup ou new
 	recieve_id=recvfrom(fd_tcp_cs,buffer,10,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
-	//std::cout << "recieve_id com " << recieve_id << std::endl;
+	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
@@ -268,24 +267,35 @@ bool Client::connectionCS(int type) {
         addr_udp_cs.sin_family=AF_INET;
         a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
         addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
-        addr_udp_cs.sin_port=htons(cs_port);
+        addr_udp_cs.sin_port=htons(atoi(cs_port));
         return true;
     } else if( type == 1) {
         // TCP connection to the Central Server
         
-        fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
-        if(fd_tcp_cs==-1)
-            return false;
-        
-        memset((void*)&addr_tcp_cs,(int)'\0',sizeof(&addr_tcp_cs));
-        addr_tcp_cs.sin_family=AF_INET;
-        a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
-        addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
-        addr_tcp_cs.sin_port=htons(cs_port);
-        return true;
-    }
-    
-    return true;
+		struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+		struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+
+		memset(&host_info, 0, sizeof host_info);
+
+		host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
+		host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+
+		int status = getaddrinfo(host_name, cs_port, &host_info, &host_info_list);
+
+		fd_tcp_cs=socket(host_info_list->ai_family, host_info_list->ai_socktype,host_info_list->ai_protocol);//SOCKET do TCP
+
+		if(fd_tcp_cs==-1)
+			return false;
+
+			status = connect(fd_tcp_cs, host_info_list->ai_addr, host_info_list->ai_addrlen);
+
+			if(status == -1 )
+			return false;
+
+			return true;
+		}
+
+		return true;
 }
 
 bool Client::connectionSS() {
