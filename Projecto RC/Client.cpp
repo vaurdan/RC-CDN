@@ -123,9 +123,9 @@ void Client::retrieve(std::string file_name){
 	int size_buffer;
 	
 	
-
-    std::string command = "REQ " + file_name + "\n";
-	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+	//bzero(buffer,600);
+        std::string command = "REQ " + file_name + "\n";
+	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
 	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
@@ -133,36 +133,56 @@ void Client::retrieve(std::string file_name){
 	//std::cout << "Buffer: " << buffer << std::endl;
 	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
-	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
-	
+
+	//Leitura do comando do servidor
 	std::cout << "Buffer: " << buffer << std::endl;
-	
-	if(strcmp (buffer, "REP nok\n") == 0){
-		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
-		exit(0);		
-	}else {
-		std::vector<std::string> size_buffer_response = split(buffer, ' ');
-		size_buffer =  atoi(size_buffer_response.back().c_str());
+	if(strcmp (buffer, "ERR\n") == 0){
+		std::cerr << "Erro, pedido mal formulado" << std::endl;
+		return;
 	}
+	
+	//Leitura de ok ou nok
+	recieve_id=recvfrom(fd_tcp_ss,buffer,6,4,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	std::cout << "recieve_id com " << recieve_id << std::endl;
+	if(recieve_id ==-1)
+		exit(1);
+
+	
+	if(strcmp (buffer, "no") == 0){
+		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
+		return;		
+	}
+	
+	
+	std::vector<std::string> size_buffer_response = split(buffer, ' ');
+	size_buffer =  atoi(size_buffer_response[2].c_str());
+
 	
 	char file_buffer[size_buffer];
 	
     ficheiro_recebido = fopen(file_name.c_str(), "w");
     nleft = size_buffer;
-    ptr = &buffer[0];
+    ptr = &file_buffer[0];
     while (nleft > 0) {
-        nread = read(ficheiro_recebido,ptr,nleft);
-        if(nread==-1) exit(1);
-        else if(nread==0) break;
-        
-        nleft -= nread;
-        ptr+=nread;
+
+	std::cout << "Entrei no while com nleft: " << nleft << std::endl;
+	nread = read(fileno(ficheiro_recebido),ptr,nleft);
+	std::cout << "Fiz read com valor: " << nread << std::endl;
+	if(nread==-1) exit(1);
+	else if(nread==0) break;
+	
+	nleft -= nread;
+	ptr+=nread;
+	
     }
-    nread = nbytes-nleft;
-    fclose(ficheiro_recebido);
+
+	nread = nbytes-nleft;
+    
+    	fclose(ficheiro_recebido);
     
 	
 	/*recv(fd_tcp_ss, file_buffer, 512, 0);
