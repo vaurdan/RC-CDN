@@ -173,12 +173,9 @@ void Client::retrieve(std::string file_name){
 			break;
 		
 		size_buffer += letra;
-<<<<<<< HEAD
-		//std::cout << "letra: " << letra << std::endl;
-=======
-		std::cout << "letra: " << letra << std::endl;
+
         contador++;
->>>>>>> 3519e23d79c75a062c22cef5255857369a527515
+
 	
 	}
 	
