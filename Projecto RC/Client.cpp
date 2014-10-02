@@ -39,10 +39,6 @@ std::vector<std::string> Client::split(const std::string &s, char delim) {
 }
 
 
-/** AWL
- 192.168.128.2 59100 10
- f1.txt f222222.txt f3.jpg A380.jpg Boeing_747.jpg aaaaaa.txt bbbbbb.txt cccccc.txt dddddd.txt eeeeeee.txt
- */
 std::vector<std::string> Client::parse_files( std::vector<std::string> response ) {
     //Inverter a lista
     std::reverse(response.begin(),response.end());
@@ -124,11 +120,12 @@ void Client::retrieve(std::string file_name){
 	std::string size_buffer = "";
 	int file_size;
 	
+	this->connectionSS();
 	
 	//bzero(buffer,600);
     std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
-	std::cout << "connect_id com " << connect_id << std::endl;	
+	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
@@ -136,12 +133,12 @@ void Client::retrieve(std::string file_name){
 	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	std::cout << "recieve_id com " << recieve_id << std::endl;
+	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
 	//Leitura do comando do servidor
-	std::cout << "Buffer: " << buffer << std::endl;
+	//std::cout << "Buffer: " << buffer << std::endl;
 	if(strcmp (buffer, "ERR\n") == 0){
 		std::cerr << "Erro, pedido mal formulado" << std::endl;
 		return;
@@ -149,7 +146,7 @@ void Client::retrieve(std::string file_name){
 	bzero(buffer,100);
 	//Leitura de ok ou nok
 	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	std::cout << "recieve_id com " << recieve_id << std::endl;
+	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
@@ -170,11 +167,11 @@ void Client::retrieve(std::string file_name){
 			break;
 		
 		size_buffer += letra;
-		std::cout << "letra: " << letra << std::endl;
+		//std::cout << "letra: " << letra << std::endl;
 	
 	}
 	
-	std::cout << "size_buffer: " << size_buffer << std::endl;
+	//std::cout << "size_buffer: " << size_buffer << std::endl;
 	
 	file_size = atoi(size_buffer.c_str());
 	char file_buffer[file_size];
@@ -182,7 +179,7 @@ void Client::retrieve(std::string file_name){
 	tamanho_ficheiro = file_size;
 	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
-	std::cout << "Iniciei criação do ficheiro" << std::endl;
+	//std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
 		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
 		exit(EXIT_FAILURE);		
@@ -206,23 +203,37 @@ void Client::retrieve(std::string file_name){
 	
 void Client::upload(std::string up_file_name){
 	
-	memset( buffer, 0, 600);	
-	std::string command = "UPR " + up_file_name + "\n";
-	connect_id=sendto(fd_tcp_ss, command.c_str(), 20, 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
-	std::cout << "connect_id com " << connect_id << std::endl;	
+	this->connectionSS();
+	//bzero(buffer,600);
+    std::string command = "UPR " + up_file_name + "\n";
+    std::cout << "Comando: " << command << std::endl;
+	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
 	//std::cout << "Buffer: " << buffer << std::endl;
-	memset( buffer, 0, 600);
+	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
-	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-	std::cout << "recieve_id com " << recieve_id << std::endl;
+	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
-	std::cout << "Buffer: " << buffer << std::endl;
+	//Leitura do comando do servidor
+	//std::cout << "Buffer: " << buffer << std::endl;
+	if(strcmp (buffer, "ERR\n") == 0){
+		std::cerr << "Erro, pedido mal formulado" << std::endl;
+		return;
+	}
+	bzero(buffer,100);
+	//Leitura de ok ou nok
+	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	//std::cout << "recieve_id com " << recieve_id << std::endl;
+	if(recieve_id ==-1)
+		exit(1);
 	
+	//std::cout << "Buffer: " << buffer << "." << std::endl;
 	}
 
 void Client::connection() {
