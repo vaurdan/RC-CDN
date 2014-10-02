@@ -16,6 +16,7 @@
 #include <cstring>
 #include <fstream>
 #include <errno.h>
+#include <fcntl.h>
 #include "Client.h"
 
 /*
@@ -120,11 +121,12 @@ void Client::retrieve(std::string file_name){
 	FILE *ficheiro_recebido;
 	int remain_data = 0;
 	ssize_t len;
-	int size_buffer;
+	std::string size_buffer = "";
+	int file_size;
 	
 	
 	//bzero(buffer,600);
-        std::string command = "REQ " + file_name + "\n";
+    std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
 	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
@@ -137,56 +139,47 @@ void Client::retrieve(std::string file_name){
 	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
-
+	
 	//Leitura do comando do servidor
 	std::cout << "Buffer: " << buffer << std::endl;
 	if(strcmp (buffer, "ERR\n") == 0){
 		std::cerr << "Erro, pedido mal formulado" << std::endl;
 		return;
 	}
-	
+	bzero(buffer,100);
 	//Leitura de ok ou nok
-	recieve_id=recvfrom(fd_tcp_ss,buffer,6,4,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
-
 	
-	if(strcmp (buffer, "no") == 0){
+	//std::cout << "Buffer: " << buffer << "." << std::endl;
+
+	if(strcmp (buffer, "nok") == 0){
 		std::cerr << "Erro, ficheiro '" << file_name << "' não existe" << std::endl;
 		return;		
 	}
 	
+	bzero(buffer,100);
+	char letra;
 	
-	std::vector<std::string> size_buffer_response = split(buffer, ' ');
-	size_buffer =  atoi(size_buffer_response[2].c_str());
-
+	while (letra != ' '){
 	
-	char file_buffer[size_buffer];
+		recieve_id=recvfrom(fd_tcp_ss,&letra,1,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+		if(letra == ' ')
+			break;
+		
+		size_buffer += letra;
+		std::cout << "letra: " << letra << std::endl;
 	
-    ficheiro_recebido = fopen(file_name.c_str(), "w");
-    nleft = size_buffer;
-    ptr = &file_buffer[0];
-    while (nleft > 0) {
-
-	std::cout << "Entrei no while com nleft: " << nleft << std::endl;
-	nread = read(fileno(ficheiro_recebido),ptr,nleft);
-	std::cout << "Fiz read com valor: " << nread << std::endl;
-	if(nread==-1) exit(1);
-	else if(nread==0) break;
+	}
 	
-	nleft -= nread;
-	ptr+=nread;
+	std::cout << "size_buffer: " << size_buffer << std::endl;
 	
-    }
-
-	nread = nbytes-nleft;
-    
-    	fclose(ficheiro_recebido);
-    
+	file_size = atoi(size_buffer.c_str());
+	char file_buffer[file_size];
 	
-	/*recv(fd_tcp_ss, file_buffer, 512, 0);
-	tamanho_ficheiro = size_buffer;
+	tamanho_ficheiro = file_size;
 	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
 	std::cout << "Iniciei criação do ficheiro" << std::endl;
@@ -196,14 +189,14 @@ void Client::retrieve(std::string file_name){
 		}
 	remain_data = tamanho_ficheiro;
 	
-	while((len = recv(fd_tcp_ss, file_buffer, 300, 0)) > 0 && (remain_data > 0)){
+	while((len = recvfrom(fd_tcp_ss,file_buffer,512,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		remain_data -= len;
 		//fprintf(stdout, "Recebidos %l bytes e esperava :- %d bytes\n", len, remain_data);
 		
 		}
 		fclose(ficheiro_recebido);
-    */
+    
 		
 	//close(fd_tcp_ss);
 	
