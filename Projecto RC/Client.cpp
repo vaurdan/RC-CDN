@@ -148,11 +148,24 @@ void Client::retrieve(std::string file_name){
 		size_buffer =  atoi(size_buffer_response.back().c_str());
 	}
 	
-	//stackoverflow.com/question/11952898/c-send-and-receive-file
 	char file_buffer[size_buffer];
 	
+    ficheiro_recebido = fopen(file_name.c_str(), "w");
+    nleft = size_buffer;
+    ptr = &buffer[0];
+    while (nleft > 0) {
+        nread = read(ficheiro_recebido,ptr,nleft);
+        if(nread==-1) exit(1);
+        else if(nread==0) break;
+        
+        nleft -= nread;
+        ptr+=nread;
+    }
+    nread = nbytes-nleft;
+    fclose(ficheiro_recebido);
+    
 	
-	recv(fd_tcp_ss, file_buffer, 512, 0);
+	/*recv(fd_tcp_ss, file_buffer, 512, 0);
 	tamanho_ficheiro = size_buffer;
 	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
@@ -170,85 +183,9 @@ void Client::retrieve(std::string file_name){
 		
 		}
 		fclose(ficheiro_recebido);
+    */
 		
-	/*std::cout << "Vou iniciar a criação do ficheiro" << std::endl;
-	
-	std::ofstream outFile(file_name.c_str(), std::ios::out|std::ios::binary|std::ios::app);
-	int size = 600;
-	int n;
-	std::cout << "Vou iniciar a leitura do ficheiro" << std::endl;
-	while(size > 0){
-		
-		bzero(buffer,600);
-		std::cout << "entrei no ciclo e limpei buffer" << std::endl;
-		if(size >= 600){
-			
-			std::cout << "entrei no if com size: " << size << std::endl;
-			n = recv(fd_tcp_ss,buffer,600,0);
-			std::cout << "tou aqui!!" << std::endl;
-			std::cout << "n do if tem: " << n << std::endl;
-			outFile.write(buffer,n);
-			std::cout << "ja escrevi no if" << std::endl;
-			
-			}else{
-				
-				std::cout << "entrei no else com size: " << size << std::endl;
-				n = recvfrom(fd_tcp_ss,buffer,size,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
-				std::cout << "n do else tem: " << n << std::endl;
-				buffer[size]='\0';
-				outFile.write(buffer,n);
-				std::cout << "ja escrevi no else" << std::endl;
-				}
-				
-				size -= 600;
-				std::cout << "Decrementei size" << size << std::endl;
-		
-		
-		}
-		
-		outFile.close();
-		std::cout << "Ficheiro carregado" << std::endl;*/
-
-	/*memset(buffer,0,600);
-	FILE *fn = fopen(file_name.c_str(), "a");
-	std::cout << "Abri o ficheiro: " << file_name.c_str() <<std::endl;
-	if(fn == NULL){
-		std::cerr << "Não é possivel abrir o ficheiro" std::cout;
-	}else{
-		
-		
-		}
-	
-	
-	*/
-	//std::cout << buffer << std::endl;
-	/*if(buffer == 0){
-		fputs("Error reading file", stderr);
-		}else{
-		int fn_block_sz = 0;
-		while((fn_block_sz = recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss))){
-			int write_sz = fwrite(buffer, sizeof(char), fn_block_sz, fn);
-			if(write_sz < fn_block_sz){
-				std::cerr << "File write failed." << std::endl;
-				}
-				memset(buffer,0,600);
-				if(fn_block_sz == 0 || fn_block_sz != 600)
-					break;
-				
-			}
-			fclose(fn);			
-		}
-		
-		close(fd_tcp_ss);
-				
-	*/
-		
-			
-	
-	
-	
-	
-	close(fd_tcp_ss);
+	//close(fd_tcp_ss);
 	
 	//return 0;
  
