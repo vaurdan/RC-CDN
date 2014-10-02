@@ -67,7 +67,7 @@ public:
     void upload(std::string up_file_name);
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> parse_response(char* buffer);
-    bool connection();
+    bool connectionCS(int type);
     bool connectionSS();
     static inline void loadbar(unsigned int x, unsigned int n, unsigned int w = 50);
     

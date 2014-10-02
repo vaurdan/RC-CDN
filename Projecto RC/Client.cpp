@@ -95,6 +95,8 @@ std::vector<std::string> Client::parse_response(char* buffer) {
 
 void Client::list() {
     
+    this->connectionCS(0);
+    
     // Enviar a mensagem para o servidor
     connect_id=sendto(fd_udp_cs, "LST\n", 4, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
     if(connect_id==-1)
@@ -221,6 +223,7 @@ void Client::retrieve(std::string file_name){
 	
 void Client::upload(std::string up_file_name){
 	
+    this->connectionCS(1);
 
 	//bzero(buffer,600);
     std::string command = "UPR " + up_file_name + "\n";
@@ -254,30 +257,34 @@ void Client::upload(std::string up_file_name){
 	//std::cout << "Buffer: " << buffer << "." << std::endl;
 	}
 
-bool Client::connection() {
+bool Client::connectionCS(int type) {
     
-    // UDP connection to the Central Server
-    fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
-    if(fd_udp_cs==-1)
-        return false;
-    
-    memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
-    addr_udp_cs.sin_family=AF_INET;
-    a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
-    addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
-    addr_udp_cs.sin_port=htons(cs_port);
-
-    // TCP connection to the Central Server
-
-    fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
-    if(fd_tcp_cs==-1)
-        return false;
-    
-    memset((void*)&addr_tcp_cs,(int)'\0',sizeof(&addr_tcp_cs));
-    addr_tcp_cs.sin_family=AF_INET;
-    a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
-    addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
-    addr_tcp_cs.sin_port=htons(cs_port);
+    if(type == 0) {
+        // UDP connection to the Central Server
+        fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
+        if(fd_udp_cs==-1)
+            return false;
+        
+        memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
+        addr_udp_cs.sin_family=AF_INET;
+        a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
+        addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
+        addr_udp_cs.sin_port=htons(cs_port);
+        return true;
+    } else if( type == 1) {
+        // TCP connection to the Central Server
+        
+        fd_tcp_cs=socket(AF_INET, SOCK_STREAM,0);//SOCKET do TCP
+        if(fd_tcp_cs==-1)
+            return false;
+        
+        memset((void*)&addr_tcp_cs,(int)'\0',sizeof(&addr_tcp_cs));
+        addr_tcp_cs.sin_family=AF_INET;
+        a_tcp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
+        addr_tcp_cs.sin_addr.s_addr = a_tcp_cs->s_addr;
+        addr_tcp_cs.sin_port=htons(cs_port);
+        return true;
+    }
     
     return true;
 }
