@@ -65,6 +65,7 @@ public:
     void list();
     void retrieve(std::string file_name);
     void upload(std::string up_file_name);
+    int file_size(int fd);
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> parse_response(char* buffer);
     bool connectionCS(int type);

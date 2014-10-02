@@ -18,6 +18,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <iomanip>
+#include <sys/stat.h>
+#include <iostream>
 #include "Client.h"
 
 inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
@@ -222,8 +224,11 @@ void Client::retrieve(std::string file_name){
 void Client::upload(std::string up_file_name){
 	
     this->connectionCS(1);
-
-	//bzero(buffer,600);
+	FILE *up_file;
+	int size;
+	char *data[128];
+	
+	
     std::string command = "UPR " + up_file_name + "\n";
 	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
 	std::cout << "connect_id com " << connect_id << std::endl;	
@@ -233,7 +238,7 @@ void Client::upload(std::string up_file_name){
 	std::cout << "Buffer: " << buffer << std::endl;
 	bzero(buffer,600);
 	addrlen_tcp_cs=sizeof(addr_tcp_cs);
-	recieve_id=recvfrom(fd_tcp_cs,buffer,100,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,4,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	std::cout << "Buffer: " << buffer << std::endl;
 	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
@@ -247,13 +252,58 @@ void Client::upload(std::string up_file_name){
 	}
 	bzero(buffer,100);
 	//Leitura de dup ou new
-	recieve_id=recvfrom(fd_tcp_cs,buffer,10,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,3,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
 	std::cout << "Buffer: " << buffer << "." << std::endl;
+	
+	if(strcmp(buffer, "dup") == 0){
+		std::cerr << "Erro, ficheiro " << up_file_name << " já existe." << std::endl;
+		return;
+		}
+	else{
+		
+		up_file=fopen(up_file_name.c_str(), "r");
+		if(up_file == NULL){
+			fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
+			return;		
+		}
+		
+		size = this->file_size(fileno(up_file));
+		//std::cout << size << std::endl;
+		std::ostringstream command_stream;
+		command_stream << "UPC " << size << " ";
+		std::string command = command_stream.str();
+		//std::cout << "Command " << command << std::endl;
+		
+		connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+		if(connect_id ==-1)
+			exit(1);
+		int tamanho_lido;
+		while((tamanho_lido = fread(data,1,128, up_file)) > 0) {
+			
+			connect_id=sendto(fd_tcp_cs, data, tamanho_lido, 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+			std::cout << data << std::endl;
+
+		}
+		
+		std::string barra_n = "\n";
+		connect_id=sendto(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+		fclose(up_file);
+		
+
+		
+		//connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+		}
 	}
+	
+int Client::file_size(int fd){
+    struct stat stat_buf;
+    int rc = fstat(fd, &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
+}
 
 bool Client::connectionCS(int type) {
     
