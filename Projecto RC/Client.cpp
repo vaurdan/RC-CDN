@@ -29,7 +29,7 @@ inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
     
     std::cout << std::setw(3) << (int)(ratio*100) << "% [";
     for (int x=0; x<c; x++) std::cout << "=";
-    for (int x=c; x<w; x++) std::cout << " ";
+    for (unsigned int x=c; x<w; x++) std::cout << " ";
     std::cout << "]\r" << std::flush;
 }
 
@@ -197,7 +197,7 @@ void Client::retrieve(std::string file_name){
 		exit(EXIT_FAILURE);		
     }
 
-	remain_data = tamanho_ficheiro;
+	remain_data = file_size;
     setbuf(stdout, NULL);
     
     int i = 0;
@@ -207,7 +207,7 @@ void Client::retrieve(std::string file_name){
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
         i += len;
         remain_data -= len;
-        loadbar(i, tamanho_ficheiro);
+        loadbar(i, file_size);
         
         }
 		fclose(ficheiro_recebido);
@@ -231,7 +231,8 @@ void Client::upload(std::string up_file_name){
 	//std::cout << "Buffer: " << buffer << std::endl;
 	bzero(buffer,600);
 	addrlen_tcp_cs=sizeof(addr_tcp_cs);
-	recieve_id=recvfrom(fd_tcp_cs,buffer,4,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,100,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	std::cout << "Buffer: " << buffer << std::endl;
 	//std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);

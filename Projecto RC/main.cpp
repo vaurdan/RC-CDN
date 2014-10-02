@@ -8,9 +8,7 @@ int main(int argc, char *argv[]){
     char *host_name;
     int cs_port;
     std::string input;
-    int i;
-    
-    std::cout << std::endl;
+   
     if(argc == 1){
         host_name = (char*) malloc(sizeof(char) * 128);
         gethostname(host_name, 128);
