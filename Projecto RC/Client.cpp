@@ -17,7 +17,21 @@
 #include <fstream>
 #include <errno.h>
 #include <fcntl.h>
+#include <iomanip>
 #include "Client.h"
+
+inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
+{
+    if ( (x != n) && (x % (n/100+1) != 0) ) return;
+    
+    float ratio  =  x/(float)n;
+    int   c      =  ratio * w;
+    
+    std::cout << std::setw(3) << (int)(ratio*100) << "% [";
+    for (int x=0; x<c; x++) std::cout << "=";
+    for (int x=c; x<w; x++) std::cout << " ";
+    std::cout << "]\r" << std::flush;
+}
 
 /*
  * Definição das funções de split
@@ -193,16 +207,19 @@ void Client::retrieve(std::string file_name){
 		exit(EXIT_FAILURE);		
     }
 	remain_data = tamanho_ficheiro;
-	
-	while((len = recvfrom(fd_tcp_ss,file_buffer,512,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
+    setbuf(stdout, NULL);
+    
+    int i = 0;
+    float iterations = (tamanho_ficheiro + 1) / 128;
+
+	while((len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		remain_data -= len;
 		//fprintf(stdout, "Recebidos %l bytes e esperava :- %d bytes\n", len, remain_data);
-		
-		}
+        loadbar(i++, iterations);
+        }
 		fclose(ficheiro_recebido);
-    
-		
+    std::cout << std::endl << " Done! " << std::endl;
 	//close(fd_tcp_ss);
 	
 	//return 0;
