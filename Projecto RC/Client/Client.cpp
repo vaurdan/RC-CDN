@@ -377,3 +377,30 @@ bool Client::connectionSS() {
     return true;
 	
 	}
+	
+////TESTE APAGAR DEPOIS
+void Client::testConnection() {
+    
+    this->connectionCS(0);
+    
+    // Enviar a mensagem para o servidor
+    connect_id=sendto(fd_udp_cs, "test\n", 5, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
+    if(connect_id==-1)
+        exit(1);
+    
+    addrlen_udp_cs=sizeof(addr_udp_cs);
+    recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
+    if(recieve_id==-1)
+        exit(1);
+    
+    
+
+    //Fechar as ligações
+    close(recieve_id);
+    close(connect_id);
+    
+    
+    
+}
+	
+

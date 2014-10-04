@@ -5,7 +5,8 @@
 int main(int argc, char *argv[]){
 	
 	char *cs_port;
-
+	std::string input;
+	
 	for(int i = 1; i < argc; i++){
 
 		if(std::string(argv[i]) == "-p"){
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	CServer *cserver = new CServer(cs_port);
-	
+	cserver->testConnection();
 	
 	
 	

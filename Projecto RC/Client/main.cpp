@@ -42,8 +42,8 @@ int main(int argc, char *argv[]){
     
     //Fazer a ligação ao servidor pelo cliente
     Client *client = new Client(host_name, cs_port);
-    //Criar a ligaçao do servidor central
-    
+
+
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
 		std::vector<std::string> in = client->split(input,' ');
@@ -70,7 +70,9 @@ int main(int argc, char *argv[]){
 				}
 				else if(in.front() == "exit") {
 					std::cout << "Bye!" << std::endl;
-					exit(1);
+					exit(1);}//APGAR AQUI!!!!!! DEPOIS
+					else if(in.front() == "test") {
+						client->testConnection();
         }
         std::cout << "bwsh > ";
     }

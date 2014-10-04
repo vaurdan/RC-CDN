@@ -1,8 +1,31 @@
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <iostream>
+#include <stdlib.h>
+#include <string>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <vector>
+#include <arpa/inet.h>
+#include <sstream>
+#include <algorithm>
+#include <cstring>
+#include <fstream>
+#include <errno.h>
+#include <fcntl.h>
+#include <iomanip>
+#include <sys/stat.h>
+#include <iostream>
+
 #include "CServer.h"
 
 
 //Ao ser chamado o CServer são criadas duas ligações, uma UPD outra TCP
-bool CServer::connectionCS(int type) {
+/*bool CServer::connectionCS(int type) {
     
     if(type == 0) {
         // UDP connection to the Central Server
@@ -43,4 +66,44 @@ bool CServer::connectionCS(int type) {
 		}
 
 		return true;
-}
+}*/
+
+void CServer::testConnection(){
+
+	std::cout << "testando a conecçao" << std::endl;
+	if((fd=socket(AF_INET,SOCK_DGRAM,0))==-1)
+		exit(1);
+		
+	memset((void*)&addr,(int)'\0',sizeof(addr));
+	addr.sin_family=AF_INET;
+	addr.sin_addr.s_addr=htonl(INADDR_ANY);
+	addr.sin_port=htons(59021);
+	
+	ret=bind(fd,(struct sockaddr*)&addr,sizeof(addr));
+	if(ret == -1)
+		exit(1);
+	std::cout << "vou entrar no while" << std::endl;
+	while(1){
+		
+		std::cout << "tou no while" << std::endl;
+		addrlen=sizeof(addr);
+		nread=recvfrom(fd,buffer,128,0,(struct sockaddr*)&addr,&addrlen);
+		if(nread==-1)
+			exit(1);
+		if(buffer == "test"){
+			std::cout << "teste" << std::endl;
+			}
+		std::cout << "fiz receive" << std::endl;
+		ret=sendto(fd,buffer,nread,0,(struct sockaddr*)&addr, addrlen);
+		if(ret==-1)
+			exit(1);
+		std::cout << "fiz send" << std::endl;
+		
+		
+		}
+		
+		std::cout << "vou desligar" << std::endl;
+		
+	 //close(fd);
+	 //exit(0);
+	}

@@ -30,7 +30,7 @@ class CServer {
 	
 	public:
 	
-	//Ligações UDP com servidor central
+	/*//Ligações UDP com servidor central
     int fd_udp_cs;                   
     struct sockaddr_in addr_udp_cs;
     struct in_addr *a_udp_cs;
@@ -53,13 +53,25 @@ class CServer {
     char buffer[600];
     std::string input;
     int nbytes, nleft,nwritten, nread;
-    char *ptr;
+    char *ptr;*/
+    
+    //definição das variaveis so para testar agora se esta a ser feita ligação
+    
+    char *cs_port;
+    int fd, ret, nread;
+    socklen_t addrlen;
+    struct sockaddr_in addr;
+    char buffer[128];
+    
 	
 	
 	public:
 	
 	CServer(char *port) : cs_port(port) {};
 	bool connectionCS(int type);
+	
+	void testConnection();
+	
 	private:
 	
 
