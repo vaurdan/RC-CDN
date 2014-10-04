@@ -68,6 +68,8 @@ class CServer {
 	public:
 	
 	CServer(char *port) : cs_port(port) {};
+    void start();
+    
 	bool connectionCS(int type);
 	
 	void testConnection();

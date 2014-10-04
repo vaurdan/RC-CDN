@@ -23,7 +23,7 @@
 #include <arpa/inet.h>
 #include <sstream>
 #include <algorithm>
-#define PORT 58021
+#define PORT "58021"
 
 
 class Client {

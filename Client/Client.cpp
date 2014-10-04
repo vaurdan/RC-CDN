@@ -24,109 +24,109 @@
 
 inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
 {
-    if ( (x != n) && (x % (n/100+1) != 0) ) return;
-    
-    float ratio  =  x/(float)n;
-    int   c      =  ratio * w;
-    
-    std::cout << std::setw(3) << (int)(ratio*100) << "% [";
-    for (int x=0; x<c; x++) std::cout << "=";
-    for (unsigned int x=c; x<w; x++) std::cout << " ";
-    std::cout << "]\r" << std::flush;
+	if ( (x != n) && (x % (n/100+1) != 0) ) return;
+	
+	float ratio  =  x/(float)n;
+	int   c      =  ratio * w;
+	
+	std::cout << std::setw(3) << (int)(ratio*100) << "% [";
+	for (int x=0; x<c; x++) std::cout << "=";
+	for (unsigned int x=c; x<w; x++) std::cout << " ";
+	std::cout << "]\r" << std::flush;
 }
 
 /*
  * Definição das funções de split
  */
 std::vector<std::string> &Client::split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
+	std::stringstream ss(s);
+	std::string item;
+	while (std::getline(ss, item, delim)) {
+		elems.push_back(item);
+	}
+	return elems;
 }
 
 
 std::vector<std::string> Client::split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
+	std::vector<std::string> elems;
+	split(s, delim, elems);
+	return elems;
 }
 
 
 std::vector<std::string> Client::parse_files( std::vector<std::string> response ) {
-    //Inverter a lista
-    std::reverse(response.begin(),response.end());
-    
-    std::string command = response.back();
-    response.pop_back();
+	//Inverter a lista
+	std::reverse(response.begin(),response.end());
+	
+	std::string command = response.back();
+	response.pop_back();
 
-    std::string ip = response.back();
-    response.pop_back();
-    this->ss_ip = new char[ip.length() + 1];
-    std::strcpy (this->ss_ip, ip.c_str());
-    
-    std::string port = response.back();
-    response.pop_back();
-    this->ss_port = new char[port.length() + 1];
-    std::strcpy (this->ss_port, port.c_str());
-    
-    
-    unsigned int num_files = atoi(response.back().c_str());
-    response.pop_back();
-    
-    if(num_files != response.size() || command != "AWL" ) {
-        return std::vector<std::string>();
-    }
-    
-    std::reverse(response.begin(),response.end());
-    
-    return response;
-    
+	std::string ip = response.back();
+	response.pop_back();
+	this->ss_ip = new char[ip.length() + 1];
+	std::strcpy (this->ss_ip, ip.c_str());
+	
+	std::string port = response.back();
+	response.pop_back();
+	this->ss_port = new char[port.length() + 1];
+	std::strcpy (this->ss_port, port.c_str());
+	
+	
+	unsigned int num_files = atoi(response.back().c_str());
+	response.pop_back();
+	
+	if(num_files != response.size() || command != "AWL" ) {
+		return std::vector<std::string>();
+	}
+	
+	std::reverse(response.begin(),response.end());
+	
+	return response;
+	
 }
 
 std::vector<std::string> Client::parse_response(char* buffer) {
-    std::string content(buffer);
-    std::vector<std::string> elements = split(content,' ');
-    
-    return parse_files(elements);  
+	std::string content(buffer);
+	std::vector<std::string> elements = split(content,' ');
+	
+	return parse_files(elements);  
 }
 	
 
 
 void Client::list() {
-    
-    this->connectionCS(0);
-    
-    // Enviar a mensagem para o servidor
-    connect_id=sendto(fd_udp_cs, "LST\n", 4, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
-    if(connect_id==-1)
-        exit(1);
-    
-    addrlen_udp_cs=sizeof(addr_udp_cs);
-    recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
-    if(recieve_id==-1)
-        exit(1);
-    
-    std::vector<std::string> resposta = parse_response(buffer);
-    if(resposta.empty()) {
-        std::cout << "Erro de protocolo" << std::endl;
-        return;
-    }
-    
-    int number = 1;
-    std::cout << "NUMERO\tNOME DO FICHEIRO" << std::endl;
-    for (std::vector<std::string>::iterator it = resposta.begin(); it != resposta.end(); ++it) {
-        std::cout << number++ << "\t" << *it << std::endl;
-    }
+	
+	this->connectionCS(0);
+	
+	// Enviar a mensagem para o servidor
+	connect_id=sendto(fd_udp_cs, "LST\n", 4, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
+	if(connect_id==-1)
+		exit(1);
+	
+	addrlen_udp_cs=sizeof(addr_udp_cs);
+	recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
+	if(recieve_id==-1)
+		exit(1);
+	
+	std::vector<std::string> resposta = parse_response(buffer);
+	if(resposta.empty()) {
+		std::cout << "Erro de protocolo" << std::endl;
+		return;
+	}
+	
+	int number = 1;
+	std::cout << "NUMERO\tNOME DO FICHEIRO" << std::endl;
+	for (std::vector<std::string>::iterator it = resposta.begin(); it != resposta.end(); ++it) {
+		std::cout << number++ << "\t" << *it << std::endl;
+	}
 
-    //Fechar as ligações
-    close(recieve_id);
-    close(connect_id);
-    
-    
-    
+	//Fechar as ligações
+	close(recieve_id);
+	close(connect_id);
+	
+	
+	
 }
 
 //bool para dizer ao utilizador que ficheiro foi transferido?
@@ -138,21 +138,21 @@ void Client::retrieve(std::string file_name){
 	std::string size_buffer = "";
 	int file_size;
 	
-    // Inicializar a connecção ao socket.
-    this->connectionSS();
+	// Inicializar a connecção ao socket.
+	this->connectionSS();
 	
-    std::string command = "REQ " + file_name + "\n";
+	std::string command = "REQ " + file_name + "\n";
 	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
 	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-    // Vamos ver se o comando está correcto
+	// Vamos ver se o comando está correcto
 	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
 	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 
-    if(recieve_id ==-1)
+	if(recieve_id ==-1)
 		exit(1);
 	
 	//Leitura do comando do servidor
@@ -162,7 +162,7 @@ void Client::retrieve(std::string file_name){
 	}
 	bzero(buffer,100);
 
-    //Leitura de ok ou nok
+	//Leitura de ok ou nok
 	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 	if(recieve_id ==-1)
 		exit(1);
@@ -175,19 +175,19 @@ void Client::retrieve(std::string file_name){
 	bzero(buffer,100);
 	char letra;
 	
-    int contador = 0;
+	int contador = 0;
 	while (letra != ' '){
-        if(contador>100) {
-            std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
-            return;
-        }
+		if(contador>100) {
+			std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
+			return;
+		}
 	
 		recieve_id=recvfrom(fd_tcp_ss,&letra,1,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 		if(letra == ' ')
 			break;
 		
 		size_buffer += letra;
-        contador++;
+		contador++;
 	}
 	
 	//std::cout << "size_buffer: " << size_buffer << std::endl;
@@ -200,36 +200,36 @@ void Client::retrieve(std::string file_name){
 	if(ficheiro_recebido == NULL){
 		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
 		exit(EXIT_FAILURE);		
-    }
+	}
 
 	remain_data = file_size;
-    setbuf(stdout, NULL);
-    
-    int i = 0;
+	setbuf(stdout, NULL);
+	
+	int i = 0;
 
 	while((len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
 
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
-        i += len;
-        remain_data -= len;
-        loadbar(i, file_size);
-        
-        }
+		i += len;
+		remain_data -= len;
+		loadbar(i, file_size);
+		
+		}
 		fclose(ficheiro_recebido);
-    std::cout << std::endl << " Done! " << std::endl;
+	std::cout << std::endl << " Done! " << std::endl;
 	
  
 	}
 	
 void Client::upload(std::string up_file_name){
 	
-    this->connectionCS(1);
+	this->connectionCS(1);
 	FILE *up_file;
 	int size;
 	char *data[128];
 	
 	
-    std::string command = "UPR " + up_file_name + "\n";
+	std::string command = "UPR " + up_file_name + "\n";
 	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
 	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
@@ -300,28 +300,28 @@ void Client::upload(std::string up_file_name){
 	}
 	
 int Client::file_size(int fd){
-    struct stat stat_buf;
-    int rc = fstat(fd, &stat_buf);
-    return rc == 0 ? stat_buf.st_size : -1;
+	struct stat stat_buf;
+	int rc = fstat(fd, &stat_buf);
+	return rc == 0 ? stat_buf.st_size : -1;
 }
 
 bool Client::connectionCS(int type) {
-    
-    if(type == 0) {
-        // UDP connection to the Central Server
-        fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
-        if(fd_udp_cs==-1)
-            return false;
-        
-        memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
-        addr_udp_cs.sin_family=AF_INET;
-        a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
-        addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
-        addr_udp_cs.sin_port=htons(atoi(cs_port));
-        return true;
-    } else if( type == 1) {
-        // TCP connection to the Central Server
-        
+	
+	if(type == 0) {
+		// UDP connection to the Central Server
+		fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
+		if(fd_udp_cs==-1)
+			return false;
+		
+		memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
+		addr_udp_cs.sin_family=AF_INET;
+		a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
+		addr_udp_cs.sin_addr.s_addr = a_udp_cs->s_addr;
+		addr_udp_cs.sin_port=htons(atoi(cs_port));
+		return true;
+	} else if( type == 1) {
+		// TCP connection to the Central Server
+		
 		struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
 		struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
@@ -349,58 +349,59 @@ bool Client::connectionCS(int type) {
 }
 
 bool Client::connectionSS() {
-    
-    if(this->ss_port == NULL || this->ss_ip == NULL)
-        return false;
-    
-    struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-    struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+	
+	if(this->ss_port == NULL || this->ss_ip == NULL)
+		return false;
+	
+	struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+	struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
-    memset(&host_info, 0, sizeof host_info);
-    
-    host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
-    host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
-    
-    int status = getaddrinfo(this->ss_ip, this->ss_port, &host_info, &host_info_list);
-    
-    fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
-               host_info_list->ai_protocol);//SOCKET do TCP
-    
-    if(fd_tcp_ss==-1)
-        return false;
-    
-    status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    
-    if(status == -1 )
-        return false;;
-    
-    return true;
+	memset(&host_info, 0, sizeof host_info);
+	
+	host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
+	host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+	
+	int status = getaddrinfo(this->ss_ip, this->ss_port, &host_info, &host_info_list);
+	
+	fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
+			   host_info_list->ai_protocol);//SOCKET do TCP
+	
+	if(fd_tcp_ss==-1)
+		return false;
+	
+	status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
+	
+	if(status == -1 )
+		return false;
+	
+	return true;
 	
 	}
 	
 ////TESTE APAGAR DEPOIS
 void Client::testConnection() {
-    
-    this->connectionCS(0);
-    
-    // Enviar a mensagem para o servidor
-    connect_id=sendto(fd_udp_cs, "test\n", 5, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
-    if(connect_id==-1)
-        exit(1);
-    
-    addrlen_udp_cs=sizeof(addr_udp_cs);
-    recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
-    if(recieve_id==-1)
-        exit(1);
-    
-    
+	
+	std::cout << "cheguei aqui 0" << std::endl;
+	this->connectionCS(0);
+	std::cout << "cheguei aqui" << std::endl;
+	// Enviar a mensagem para o servidor
+	connect_id=sendto(fd_udp_cs, "test\n", 5, 0, (struct sockaddr*)&addr_udp_cs, sizeof(addr_udp_cs));
+	if(connect_id==-1)
+		exit(1);
+	
+	addrlen_udp_cs=sizeof(addr_udp_cs);
+	recieve_id=recvfrom(fd_udp_cs,buffer,600,0,(struct sockaddr*)&addr_udp_cs,&addrlen_udp_cs);
+	if(recieve_id==-1)
+		exit(1);
+	
+	
 
-    //Fechar as ligações
-    close(recieve_id);
-    close(connect_id);
-    
-    
-    
+	//Fechar as ligações
+	close(recieve_id);
+	close(connect_id);
+	
+	
+	
 }
 	
 

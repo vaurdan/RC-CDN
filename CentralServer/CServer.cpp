@@ -77,7 +77,7 @@ void CServer::testConnection(){
 	memset((void*)&addr,(int)'\0',sizeof(addr));
 	addr.sin_family=AF_INET;
 	addr.sin_addr.s_addr=htonl(INADDR_ANY);
-	addr.sin_port=htons(59021);
+	addr.sin_port=htons(58021);
 	
 	ret=bind(fd,(struct sockaddr*)&addr,sizeof(addr));
 	if(ret == -1)

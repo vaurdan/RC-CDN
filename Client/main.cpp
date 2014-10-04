@@ -12,7 +12,9 @@ int main(int argc, char *argv[]){
     if(argc == 1){
         host_name = (char*) malloc(sizeof(char) * 128);
         gethostname(host_name, 128);
-        //std::cout << (host_name);
+        cs_port = (char*) malloc( sizeof(char) * 10);
+        cs_port = PORT;
+        std::cout << (cs_port) << std::endl;
         
     }else{
         for(int i = 1; i < argc; i++){
@@ -58,22 +60,22 @@ int main(int argc, char *argv[]){
 			std::cout << "Retrieving...." << std::endl;
 			//std::cout << "File name found: " << in.back() << std::endl;
 			client->retrieve(in.back());
+		} else if(in.front() == "upload") {
+			if(in.size() == 1){
+				std::cerr << "File name missing" << std::endl;
+				return 1;
 			}
-			else if(in.front() == "upload") {
-				if(in.size() == 1){
-					std::cerr << "File name missing" << std::endl;
-					return 1;
-				}
-				std::cout << "Uploading...." << std::endl;
-				//std::cout << "File name found: " << in.back() << std::endl;
-				client->upload(in.back());
-				}
-				else if(in.front() == "exit") {
-					std::cout << "Bye!" << std::endl;
-					exit(1);}//APGAR AQUI!!!!!! DEPOIS
-					else if(in.front() == "test") {
-						client->testConnection();
+			std::cout << "Uploading...." << std::endl;
+			//std::cout << "File name found: " << in.back() << std::endl;
+			client->upload(in.back());
+		} else if(in.front() == "exit") {
+				std::cout << "Bye!" << std::endl;
+				exit(1);
+        }//APGAR AQUI!!!!!! DEPOIS
+			else if(in.front() == "test") {
+				client->testConnection();
         }
+
         std::cout << "bwsh > ";
     }
     
