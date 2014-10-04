@@ -1,9 +1,11 @@
 LIB_A = Client
-LIB_B = CServer
+LIB_B = CentralServer
 #LIB_C = folder_c
 
 MY_TARGETS = $(LIB_A) $(LIB_B)
 MAKE = make
+BIN_DIR = $(CURDIR)
+export BIN_DIR
 
 .PHONY: all $(MY_TARGETS)
 all: $(MY_TARGETS)

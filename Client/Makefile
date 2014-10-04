@@ -10,6 +10,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 # Main target
 $(EXEC): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $(EXEC)
+	mv $(EXEC) $(BIN_DIR)
 
 # To obtain object files
 %.o: %.cpp
@@ -17,4 +18,4 @@ $(EXEC): $(OBJECTS)
 
 # To remove generated files
 clean:
-	rm -f $(EXEC) $(OBJECTS)
+	rm -f $(BIN_DIR)/$(EXEC) $(OBJECTS)
