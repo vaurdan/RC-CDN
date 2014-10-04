@@ -1,4 +1,5 @@
 #include "Client.h"
+#include "CServer.h"
 #include <istream>
 
 
@@ -40,8 +41,10 @@ int main(int argc, char *argv[]){
     
     //std::cout << host_name << ":"  << csport << std::endl;
     
-    //Fazer a ligação ao servidor
+    //Fazer a ligação ao servidor pelo cliente
     Client *client = new Client(host_name, cs_port);
+    //Criar a ligaçao do servidor central
+    CServer *cserver = new CServer(cs_port);
     
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
