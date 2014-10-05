@@ -309,10 +309,12 @@ bool Client::connectionCS(int type) {
 	
 	if(type == 0) {
 		// UDP connection to the Central Server
+		std::cout << "Tentar ligar o socket." << std::endl;
 		fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
 		if(fd_udp_cs==-1)
 			return false;
-		
+		std::cout << "Consegui ligar o socket." << std::endl;
+
 		memset((void*)&addr_udp_cs,(int)'\0',sizeof(&addr_udp_cs));
 		addr_udp_cs.sin_family=AF_INET;
 		a_udp_cs=(struct in_addr*)gethostbyname(host_name)->h_addr_list[0];
@@ -394,11 +396,8 @@ void Client::testConnection() {
 	if(recieve_id==-1)
 		exit(1);
 	
-	
-
 	//Fechar as ligações
-	close(recieve_id);
-	close(connect_id);
+	close(fd_udp_cs);
 	
 	
 	
