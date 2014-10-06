@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <iostream>
+#include <sys/wait.h>
 
 #include "CServer.h"
 
@@ -143,7 +144,7 @@ void CServer::initTCP() {
 				std::cout << "TCP: Test command recieved." << std::endl;
 			}
 
-			ret_tcp=sendto(fd_tcp,tcp_buffer,nread_tcp,0,(struct sockaddr*)&addr_tcp, addrlen_tcp);
+			ret_tcp=send(fd_tcp,tcp_buffer,nread_tcp,0); //,(struct sockaddr*)&addr_tcp, addrlen_tcp
 			if(ret_tcp==-1) {
 				std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 				return;
