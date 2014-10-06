@@ -13,15 +13,15 @@ int main(int argc, char *argv[]){
 			if(i+1 < argc){
 				cs_port = argv[++i];
 			}else{
-			std::cerr << "erro" << std::endl;
-			return 1;
+				std::cerr << "erro" << std::endl;
+				return 1;
 			}
 		}
 
 	}
 	
 	CServer *cserver = new CServer(cs_port);
-	cserver->testConnection();
+	cserver->startListening();
 	
 	
 	

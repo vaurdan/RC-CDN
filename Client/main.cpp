@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[]){
     
-    char *host_name;
+    char *host_name = "localhost";
     char *cs_port;
     std::string input;
    

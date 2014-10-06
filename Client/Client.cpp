@@ -396,8 +396,17 @@ void Client::testConnection() {
 	if(recieve_id==-1)
 		exit(1);
 	
+	this->connectionCS(1);
+	connect_id=sendto(fd_tcp_cs, "test\n", 5, 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+	if(connect_id==-1)
+		exit(1);
+	
+	addrlen_tcp_cs=sizeof(addr_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,600,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	if(recieve_id==-1)
+		exit(1);
 	//Fechar as ligações
-	close(fd_udp_cs);
+	//close(fd_udp_cs);
 	
 	
 	
