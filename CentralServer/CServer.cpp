@@ -55,8 +55,11 @@ void CServer::processTCP() {
 		return;
 	}
 
+	// Processamento dos comandos TCP
 	if(strcmp(tcp_buffer, "test\n") == 0){
 		std::cout << "TCP: Test command recieved." << std::endl;
+	} else {
+		strncpy(tcp_buffer, "ERR\n\0", 5);
 	}
 
 	ret_tcp=send(accept_fd_tcp,tcp_buffer,nread_tcp,0);

@@ -1,8 +1,8 @@
 LIB_A = Client
 LIB_B = CentralServer
-#LIB_C = folder_c
+LIB_C = StorageServer
 
-MY_TARGETS = $(LIB_A) $(LIB_B)
+MY_TARGETS = $(LIB_A) $(LIB_B) $(LIB_C)
 MAKE = make
 BIN_DIR = $(CURDIR)
 export BIN_DIR
