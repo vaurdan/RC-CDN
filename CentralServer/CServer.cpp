@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <iostream>
+#include <sys/wait.h>
 
 #include "CServer.h"
 
