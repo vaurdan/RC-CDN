@@ -25,7 +25,7 @@
 #include <iostream>
 #include "CSInstance.h"
 
-#define PORT 58021
+#define PORT "58021"
 
 class CServer {
 	
@@ -57,11 +57,11 @@ class CServer {
     void startListening();
 
     void initUDP();
+    void processUDP();
 
     void initTCP();
+    void processTCP();
 
-	bool connectionCS(int type);
-	
 	void testConnection();
 	
 	private:

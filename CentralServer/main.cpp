@@ -6,6 +6,8 @@ int main(int argc, char *argv[]){
 	
 	char *cs_port;
 	std::string input;
+	cs_port = (char*) malloc( sizeof(char) * 10);
+    cs_port = PORT;
 	
 	for(int i = 1; i < argc; i++){
 
