@@ -45,6 +45,12 @@ void CServer::startListening() {
 	}
 }
 
+void CServer::list_command() {
+	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
+	std::cout << "UDP: List requested by " << inet_ntoa(addr_udp.sin_addr) << "..." << std::endl;
+	bzero(buffer, 128);
+	strncpy(buffer, "AWL 127.0.0.1 50000 5 o.txt miguel.txt tem.txt blue.txt waffle.txt\n\0",128);
+}
 
 void CServer::processTCP() {
 	char tcp_buffer[128];
@@ -80,11 +86,16 @@ void CServer::processUDP() {
 		return;
 	}
 
-	if(strcmp(buffer, "test\n") == 0){
-		std::cout << "UDP: Test command recieved." << std::endl;
+	// Get the IP address of the requestent 
+	int peer_name = getpeername(fd_udp,(struct sockaddr*)&addr_udp,&addrlen_udp);
+
+	if(strcmp(buffer, "LST\n") == 0){
+		this->list_command();
+	} else {
+		strncpy(buffer, "ERR\n\0", 5);
 	}
 
-	ret_udp=sendto(fd_udp,buffer,nread_udp,0,(struct sockaddr*)&addr_udp, addrlen_udp);
+	ret_udp=sendto(fd_udp,buffer,128,0,(struct sockaddr*)&addr_udp, addrlen_udp);
 	if(ret_udp==-1) {
 		std::cout << "UDP: error: " << strerror(errno) << std::endl;
 		return;

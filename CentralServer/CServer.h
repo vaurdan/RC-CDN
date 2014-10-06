@@ -62,6 +62,8 @@ class CServer {
     void initTCP();
     void processTCP();
 
+    void list_command();
+
 	void testConnection();
 	
 	private:
