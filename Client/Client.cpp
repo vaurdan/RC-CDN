@@ -403,5 +403,25 @@ void Client::testConnection() {
 	
 	
 }
+
+void Client::testREQ(std::string test_command_size) {
+		
+	this->connectionCS(1);
+	
+	std::string command = "REQ " + test_command_size + "\n";
+	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+	if(connect_id==-1)
+		exit(1);
+	
+	addrlen_tcp_cs=sizeof(addr_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,600,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	if(recieve_id==-1)
+		exit(1);
+	//Fechar as ligações
+	//close(fd_udp_cs);
+	
+	
+	
+}
 	
 

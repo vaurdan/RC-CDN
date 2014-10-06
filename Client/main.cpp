@@ -72,7 +72,9 @@ int main(int argc, char *argv[]){
 				std::cout << "Bye!" << std::endl;
 				exit(1);
         }//APGAR AQUI!!!!!! DEPOIS
-			else if(in.front() == "test") {
+			else if(in.front() == "REQ") {
+				client->testREQ(in.back());
+        }	else if(in.front() == "test") {
 				client->testConnection();
         }
 

@@ -74,6 +74,7 @@ public:
     
     //APAGAR DEPOIS
     void testConnection();
+    void testREQ(std::string test_command_size);
     
 private:
     std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);

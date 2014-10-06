@@ -4,6 +4,9 @@
 int main(int argc, char *argv[]){
 	
 	char *ss_port;
+	std::string input;
+	ss_port = (char*) malloc( sizeof(char) * 10);
+    ss_port = PORT;
 	
 	for(int i = 1; i < argc; i++){
 
@@ -11,15 +14,15 @@ int main(int argc, char *argv[]){
 			if(i+1 < argc){
 				ss_port = argv[++i];
 			}else{
-			std::cerr << "erro" << std::endl;
-			return 1;
+				std::cerr << "erro" << std::endl;
+				return 1;
 			}
 		}
 
 	}
 	
 	SServer *sserver = new SServer(ss_port);
-	sserver->TCP_Connection_test();
+	sserver->startListening();
 	
 	
 	
