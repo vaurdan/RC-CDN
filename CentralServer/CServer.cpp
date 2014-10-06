@@ -44,6 +44,51 @@ void CServer::startListening() {
 	}
 }
 
+
+void CServer::processTCP() {
+	char tcp_buffer[128];
+	bzero(tcp_buffer, 128);
+	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,128,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+	if(nread_tcp==-1) {
+		std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
+		return;
+	}
+
+	if(strcmp(tcp_buffer, "test\n") == 0){
+		std::cout << "TCP: Test command recieved." << std::endl;
+	}
+
+	ret_tcp=send(accept_fd_tcp,tcp_buffer,nread_tcp,0);
+	if(ret_tcp==-1) {
+		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
+		return;
+	}
+	std::cout << "TCP: Response sent." << std::endl;
+}
+
+void CServer::processUDP() {
+	std::cout << "UDP: Waiting for connections..." << std::endl;
+	addrlen_udp=sizeof(addr_udp);
+	bzero(buffer, 128);
+	nread_udp=recvfrom(fd_udp,buffer,128,0,(struct sockaddr*)&addr_udp,&addrlen_udp);
+	if(nread_udp==-1) {
+		std::cout << "UDP: recv error: " << strerror(errno) << std::endl;
+		return;
+	}
+
+	if(strcmp(buffer, "test\n") == 0){
+		std::cout << "UDP: Test command recieved." << std::endl;
+	}
+
+	ret_udp=sendto(fd_udp,buffer,nread_udp,0,(struct sockaddr*)&addr_udp, addrlen_udp);
+	if(ret_udp==-1) {
+		std::cout << "UDP: error: " << strerror(errno) << std::endl;
+		return;
+	}
+	std::cout << "UDP: Response sent." << std::endl;
+}
+
+
 void CServer::initUDP() { 
 	std::cout << "UDP: Initialization..." << std::endl;
 	if((fd_udp=socket(AF_INET,SOCK_DGRAM,0))==-1) {
@@ -64,25 +109,7 @@ void CServer::initUDP() {
 
 	while(1){
 		
-		std::cout << "UDP: Waiting for connections..." << std::endl;
-		addrlen_udp=sizeof(addr_udp);
-		bzero(buffer, 128);
-		nread_udp=recvfrom(fd_udp,buffer,128,0,(struct sockaddr*)&addr_udp,&addrlen_udp);
-		if(nread_udp==-1) {
-			std::cout << "UDP: recv error: " << strerror(errno) << std::endl;
-			return;
-		}
-
-		if(strcmp(buffer, "test\n") == 0){
-			std::cout << "UDP: Test command recieved." << std::endl;
-		}
-
-		ret_udp=sendto(fd_udp,buffer,nread_udp,0,(struct sockaddr*)&addr_udp, addrlen_udp);
-		if(ret_udp==-1) {
-			std::cout << "UDP: error: " << strerror(errno) << std::endl;
-			return;
-		}
-		std::cout << "UDP: Response sent." << std::endl;
+		this->processUDP();
 		
 		
 		}
@@ -132,23 +159,7 @@ void CServer::initTCP() {
 		if( (pid == fork()) == -1 ) {
 			exit(1);
 		} else if( pid == 0 ) {
-			char tcp_buffer[128];
-			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,128,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
-			if(nread_tcp==-1) {
-				std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
-				return;
-			}
-
-			if(strcmp(tcp_buffer, "test\n") == 0){
-				std::cout << "TCP: Test command recieved." << std::endl;
-			}
-
-			ret_tcp=sendto(fd_tcp,tcp_buffer,nread_tcp,0,(struct sockaddr*)&addr_tcp, addrlen_tcp);
-			if(ret_tcp==-1) {
-				std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
-				return;
-			}
-			std::cout << "TCP: Response sent." << std::endl;
+			this->processTCP();
 		}
 		//Parent process
 
