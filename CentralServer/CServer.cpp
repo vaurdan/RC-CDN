@@ -51,16 +51,22 @@ void CServer::startListening() {
 }
 
 void CServer::list_command() {
+	std::srand(std::time(0));
+	int random_server = std::rand() % storages.size();
+
+	std::vector<std::string> server = storages[random_server];
+	std::string command = "AWL " + server[0] + " " + server[1] + " 5 o.txt miguel.txt tem.txt blue.txt waffle.txt\n\0";
+
 	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
 	std::cout << "UDP: List requested by " << inet_ntoa(addr_udp.sin_addr) << "..." << std::endl;
-	bzero(buffer, 128);
-	strncpy(buffer, "AWL 127.0.0.1 50000 5 o.txt miguel.txt tem.txt blue.txt waffle.txt\n\0",128);
+	bzero(buffer, 600);
+	strncpy(buffer, command.c_str(),command.size());
 }
 
 void CServer::processTCP() {
-	char tcp_buffer[128];
-	bzero(tcp_buffer, 128);
-	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,128,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+	char tcp_buffer[600];
+	bzero(tcp_buffer, 600);
+	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,600,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 	if(nread_tcp==-1) {
 		std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
 		return;
@@ -84,8 +90,8 @@ void CServer::processTCP() {
 void CServer::processUDP() {
 	std::cout << "UDP: Waiting for connections..." << std::endl;
 	addrlen_udp=sizeof(addr_udp);
-	bzero(buffer, 128);
-	nread_udp=recvfrom(fd_udp,buffer,128,0,(struct sockaddr*)&addr_udp,&addrlen_udp);
+	bzero(buffer, 600);
+	nread_udp=recvfrom(fd_udp,buffer,600,0,(struct sockaddr*)&addr_udp,&addrlen_udp);
 	if(nread_udp==-1) {
 		std::cout << "UDP: recv error: " << strerror(errno) << std::endl;
 		return;
@@ -100,7 +106,7 @@ void CServer::processUDP() {
 		strncpy(buffer, "ERR\n\0", 5);
 	}
 
-	ret_udp=sendto(fd_udp,buffer,128,0,(struct sockaddr*)&addr_udp, addrlen_udp);
+	ret_udp=sendto(fd_udp,buffer,600,0,(struct sockaddr*)&addr_udp, addrlen_udp);
 	if(ret_udp==-1) {
 		std::cout << "UDP: error: " << strerror(errno) << std::endl;
 		return;
@@ -176,10 +182,12 @@ void CServer::initTCP() {
 			return;
 		}
 
-		if( (pid == fork()) == -1 ) {
+		pid = fork();
+		if( pid == -1 ) {
 			exit(1);
 		} else if( pid == 0 ) {
 			this->processTCP();
+			_exit(0);
 		}
 		//Parent process
 
@@ -200,8 +208,7 @@ void CServer::retrieveStorage() {
 		return;
 	}
 	std::string line;
-	while( !input.eof() ) {
-		input >> line;
+	while( std::getline(input, line, '\n') ) {
 		std::vector< std::string > server = split(line, ' ');
 		storages.push_back(server);
 	}

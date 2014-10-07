@@ -34,7 +34,7 @@ class CServer {
     pid_t pid,pid_udp;
 
     char *cs_port;
-    char buffer[128];
+    char buffer[600];
 
     // Ligação UDP
     int fd_udp, accept_fd_udp, ret_udp, nread_udp;

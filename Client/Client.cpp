@@ -109,6 +109,7 @@ void Client::list() {
 	if(recieve_id==-1)
 		exit(1);
 	
+	std::cout << buffer << std::endl;
 	std::vector<std::string> resposta = parse_response(buffer);
 	if(resposta.empty()) {
 		std::cout << "Erro de protocolo" << std::endl;
@@ -405,15 +406,15 @@ void Client::testConnection() {
 
 void Client::testREQ(std::string test_command_size) {
 		
-	this->connectionCS(1);
+	this->connectionSS();
 	
 	std::string command = "REQ " + test_command_size + "\n";
-	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
 	if(connect_id==-1)
 		exit(1);
 	
 	addrlen_tcp_cs=sizeof(addr_tcp_cs);
-	recieve_id=recvfrom(fd_tcp_cs,buffer,600,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_ss,buffer,600,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	if(recieve_id==-1)
 		exit(1);
 	//Fechar as ligações

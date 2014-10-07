@@ -24,8 +24,6 @@
 #include "SServer.h"
 
 
-
-
 void SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
 	std::cout << "Listening on port " << ss_port << "..." << std::endl;
@@ -56,21 +54,21 @@ void SServer::processTCP() {
 	bzero(tcp_buffer, 128); 
 	// Processamento dos comandos TCP
 		
-		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+		nread_tcp=read(accept_fd_tcp,tcp_buffer,4);
 		if(nread_tcp==-1) {
 			std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
 			return;
 		}
 		std::cout << "Comando : " << tcp_buffer << std::endl;
 		if(strcmp(tcp_buffer, "REQ ") == 0){
-			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,3,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
 			this->req_command(tcp_buffer);
-		   }else if(strcmp(tcp_buffer, "UPS ") == 0){
-				nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
-				std::cout << "Buffer com: " << tcp_buffer << std::endl;
-				//this->ups_command();
-				}
+	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
+			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			std::cout << "Buffer com: " << tcp_buffer << std::endl;
+			//this->ups_command();
+		}
 		
 
 
@@ -118,12 +116,18 @@ void SServer::initTCP() {
 			std::cout << "TCP: Accept erro: " << strerror(errno) << std::endl;
 			return;
 		}
-
-		if( (pid == fork()) == -1 ) {
+		std::cout << "Vou criar um fork..." << std::endl;
+		pid = fork();
+		if( pid == -1 ) {
 			exit(1);
 		} else if( pid == 0 ) {
+			std::cout << "Fork criado..." << std::endl;
 			this->processTCP();
+			_exit(0);
 		}
+		int status;
+		(void)waitpid(pid, &status, 0);
+
 		//Parent process
 
 		do {
