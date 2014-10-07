@@ -53,10 +53,14 @@ void CServer::startListening() {
 void CServer::list_command() {
 	std::srand(std::time(0));
 	int random_server = std::rand() % storages.size();
+	std::vector<std::string> files = this->retrieveFiles();
+	int files_count = files.size();
 
 	std::vector<std::string> server = storages[random_server];
-	std::string command = "AWL " + server[0] + " " + server[1] + " 5 o.txt miguel.txt tem.txt blue.txt waffle.txt\n\0";
-
+	std::string command = "AWL " + server[0] + " " + server[1] + " " + std::to_string(files_count) + " ";
+	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it)
+		command += (std::string) *it;
+	command += "\n\0";
 	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
 	std::cout << "UDP: List requested by " << inet_ntoa(addr_udp.sin_addr) << "..." << std::endl;
 	bzero(buffer, 600);
@@ -213,6 +217,23 @@ void CServer::retrieveStorage() {
 		storages.push_back(server);
 	}
 
+}
+
+std::vector<std::string> CServer::retrieveFiles() {
+
+	std::vector<std::string> files;
+
+	std::ifstream input( "files.txt" );
+	if( !input.good() ) {
+		std::cerr << "ERRO: Impossível ler ficheiro com a lista de ficheiros." << std::endl;
+		return std::vector<std::string>();
+	}
+	std::string line;
+	while( std::getline(input, line, '\n') ) {
+		files.push_back(line);
+	}
+
+	return files;
 }
 
 /*

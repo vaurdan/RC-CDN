@@ -61,6 +61,8 @@ class CServer {
 	void testConnection();
 
     void retrieveStorage();
+
+    std::vector<std::string> retrieveFiles();
 	
 	private:
 
