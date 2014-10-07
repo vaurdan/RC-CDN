@@ -23,7 +23,6 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <iostream>
-#include "CSInstance.h"
 
 #define PORT "58021"
 
