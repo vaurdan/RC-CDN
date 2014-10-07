@@ -80,28 +80,114 @@ void CServer::list_command() {
 
 char* CServer::UPR_command(char* filename) {
 	char temp_buffer[300];
-	std::cout << "FILENAME: " << filename << std::endl;
+	bzero(temp_buffer, 300);
+	std::cout << "TCP: ::: Starting upload " << filename << " ::: " << std::endl;
 	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 	// Percorrer os ficheiros e ver se existe.
 	std::vector<std::string> files = this->retrieveFiles();
 	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
-		std::cout << filename << " == " << ((std::string)*it).c_str() << std::endl;
 		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
-			std::string command = "AWR dup\n\0";
+			std::string command = "AWR dup\n";
 			strncpy(temp_buffer,command.c_str(), command.size());
 			return temp_buffer;
 
 		}
 	}
-	std::string command = "AWR new\n\0";
+	std::string command = "AWR new\n";
 	strncpy(temp_buffer,command.c_str(), command.size());
 	return temp_buffer;
+}
 
+bool CServer::connectTCP(std::string server, std::string port) {
+	
+	
+	struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+	struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+
+	memset(&host_info, 0, sizeof host_info);
+	
+	host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
+	host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+	
+	int status = getaddrinfo(server.c_str(), port.c_str(), &host_info, &host_info_list);
+	
+	fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
+			   host_info_list->ai_protocol);//SOCKET do TCP
+	
+	if(fd_tcp_ss==-1)
+		return false;
+	
+	status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
+	
+	if(status == -1 )
+		return false;
+	
+	return true;
+}
+
+char* CServer::UPC_command(char* buffer) {
+	char letra;
+	std::string size_buffer = "";
+	std::string result;
+
+	std::cout << "TCP: UPC requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	// Ler o tamanho do ficheiro
+	int contador = 0;
+	while (letra != ' '){
+		if(contador>100) {
+			std::cout << "TCP: File Upload: Error getting file size." << std::endl;
+			result = "ERR\n";
+			strncpy(buffer, result.c_str(), result.size());
+			return buffer;
+		}
+	
+		nread_tcp=recv(accept_fd_tcp,&letra,1,0);
+		if(letra == ' ')
+			break;
+		
+		size_buffer += letra;
+		contador++;
+	}
+
+	//Enviar a informação para os storages
+	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
+		std::vector<std::string> server = *it;
+		this->connectTCP( server[0], server[1] );
+		std::string command = "ASD\n";
+		send(fd_tcp_ss, command.c_str(), command.size(), 0);
+	}
+
+	int file_size = atoi(size_buffer.c_str());
+	char file_buffer[file_size];
+	
+	int remain_data = file_size;
+	std::cout << "TCP: File has " <<  file_size << " bites" << std::endl;
+	ssize_t len;
+	int i;
+
+	do {
+		len = recv(accept_fd_tcp,file_buffer,128,0);
+
+		std::cout << file_buffer;
+		// Send to the SS
+		i += len;
+		remain_data -= len;
+		std::cout << "E: " << remain_data << std::endl;
+		
+	} while(len > 0 && (remain_data > 0));
+	
+	std::cout << std::endl << " Done! " << std::endl;
+
+	result = "AWC nok";
+	strncpy(buffer, result.c_str(), result.size());
+	return buffer;
 }
 
 void CServer::processTCP() {
 	char tcp_buffer[600];
+	
 	bzero(tcp_buffer, 600);
+
 	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 	if(nread_tcp==-1) {
 		std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
@@ -109,13 +195,20 @@ void CServer::processTCP() {
 	}
 
 	// Processamento dos comandos TCP
-	if(strcmp(tcp_buffer, "UPR ") == 0){
+	if(strcmp(tcp_buffer, "UPC ") == 0){
 		bzero(tcp_buffer,600);
 
+		char* result = this->UPC_command(tcp_buffer);
+		strncpy(tcp_buffer, result, 600); 
+
+	} else if(strcmp(tcp_buffer, "UPR ") == 0){
+		bzero(tcp_buffer,600);
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+		
 		strip(tcp_buffer);
 		char* result = this->UPR_command(tcp_buffer);
 		strncpy(tcp_buffer, result, 600);
+	
 	} else {
 		strncpy(tcp_buffer, "ERR\n\0", 5);
 	}
@@ -125,7 +218,8 @@ void CServer::processTCP() {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
 	}
-	std::cout << "TCP: Response sent: " << tcp_buffer << std::endl;
+
+	std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl;
 }
 
 void CServer::processUDP() {
@@ -226,8 +320,9 @@ void CServer::initTCP() {
 		pid = fork();
 		if( pid == -1 ) {
 			exit(1);
-		} else if( pid == 0 ) {
+		} else if( pid == 0 ) { 
 			this->processTCP();
+			std::cout << "TCP: Process done." << std::endl;
 			_exit(0);
 		}
 		//Parent process
@@ -236,22 +331,29 @@ void CServer::initTCP() {
 			ret_tcp = close(accept_fd_tcp);
 		} while (ret_tcp == -1 && errno==EINTR);
 
-		if(ret_tcp==-1)return;
+		if(ret_tcp==-1) { std::cerr << "Erro no TCP: " << strerror(errno) << std::endl; return; }
 	}
+
+	std::cout << "Sai do ciclo, vai dar merda" << std::endl;
 }
 
 void CServer::retrieveStorage() {
 
 	//Criar directório para o Central Server
+	std::cout << "Abrimos o ficheiro" << std::endl;
 	std::ifstream input( "serverlist.txt" );
 	if( !input.good() ) {
 		std::cerr << "ERRO: Impossível ler ficheiro com a lista de servidores." << std::endl;
 		return;
 	}
 	std::string line;
+	std::cout << "Abrimos o ficheiro" << std::endl;
+
 	while( std::getline(input, line, '\n') ) {
-		std::vector< std::string > server = split(line, ' ');
-		storages.push_back(server);
+		std::cout << "Abrimos o ficheiro" << std::endl;
+
+		std::vector< std::string > server2 = split(line, ' ');
+		storages.push_back(server2);
 	}
 
 }
