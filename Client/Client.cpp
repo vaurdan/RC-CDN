@@ -228,6 +228,7 @@ void Client::upload(std::string up_file_name){
 	
 	std::string command = "UPR " + up_file_name + "\n";
 	connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
+	std::cout << "commando enviado." << std::cout;
 	if(connect_id ==-1) {
 		std::cout << "Erro de envio." << std::endl;
 		return;	
@@ -264,7 +265,7 @@ void Client::upload(std::string up_file_name){
 	} else{
 		
 		// TCP reconnection
-		this->connectionCS(1);
+//		this->connectionCS(1);
 
 		up_file=fopen(up_file_name.c_str(), "r");
 		if(up_file == NULL){

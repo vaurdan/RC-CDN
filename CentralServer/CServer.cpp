@@ -78,25 +78,7 @@ void CServer::list_command() {
 	strncpy(buffer, command.c_str(),command.size());
 }
 
-char* CServer::UPR_command(char* filename) {
-	char temp_buffer[300];
-	bzero(temp_buffer, 300);
-	std::cout << "TCP: ::: Starting upload " << filename << " ::: " << std::endl;
-	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
-	// Percorrer os ficheiros e ver se existe.
-	std::vector<std::string> files = this->retrieveFiles();
-	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
-		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
-			std::string command = "AWR dup\n";
-			strncpy(temp_buffer,command.c_str(), command.size());
-			return temp_buffer;
 
-		}
-	}
-	std::string command = "AWR new\n";
-	strncpy(temp_buffer,command.c_str(), command.size());
-	return temp_buffer;
-}
 
 bool CServer::connectTCP(std::string server, std::string port) {
 	
@@ -125,12 +107,32 @@ bool CServer::connectTCP(std::string server, std::string port) {
 	return true;
 }
 
+char* CServer::UPR_command(char* filename) {
+	char temp_buffer[300];
+	bzero(temp_buffer, 300);
+	std::cout << "TCP: ::: Starting upload " << filename << " ::: " << std::endl;
+	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	// Percorrer os ficheiros e ver se existe.
+	std::vector<std::string> files = this->retrieveFiles();
+	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
+		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
+			std::string command = "AWR dup\n";
+			strncpy(temp_buffer,command.c_str(), command.size());
+			return temp_buffer;
+
+		}
+	}
+	std::string command = "AWR new\n";
+	strncpy(temp_buffer,command.c_str(), command.size());
+	return temp_buffer;
+}
+
 char* CServer::UPC_command(char* buffer, char* new_filename) {
-	char letra;
+	char letra = 'a';
 	std::string size_buffer = "";
 	std::string result;
 
-	std::cout << "TCP: UPC requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	std::cout << "TCP: UPC (Upload) requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 	// Ler o tamanho do ficheiro
 	int contador = 0;
 	while (letra != ' '){
@@ -151,28 +153,25 @@ char* CServer::UPC_command(char* buffer, char* new_filename) {
 
 	int file_size = atoi(size_buffer.c_str());
 	char file_buffer[file_size];
-
 	//Enviar a informação para os storages
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
 		this->connectTCP( server[0], server[1] );
-		std::string command = "UPS " + std::string("olaola.txt") + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" Tenho blue waffle no rabo.\n");
+		std::string command = "UPS " + std::string(new_filename) + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" ") + std::string(" Tenho blue waffle no rabo.\n");
 		send(fd_tcp_ss, command.c_str(), command.size(), 0);
 	}
 
 	int remain_data = file_size;
-	std::cout << "TCP: File has " <<  file_size << " bites" << std::endl;
+	std::cout << "TCP: File has " <<  file_size << " bytes" << std::endl;
 	ssize_t len;
 	int i;
 
 	do {
 		len = recv(accept_fd_tcp,file_buffer,128,0);
-
 		std::cout << file_buffer;
 		// Send to the SS
 		i += len;
 		remain_data -= len;
-		std::cout << "E: " << remain_data << std::endl;
 		
 	} while(len > 0 && (remain_data > 0));
 	
@@ -195,27 +194,31 @@ void CServer::processTCP() {
 	}
 
 	// Processamento dos comandos TCP
-	if(strcmp(tcp_buffer, "UPC ") == 0){
-		bzero(tcp_buffer,600);
-
-		char* result = this->UPC_command(tcp_buffer, new_filename);
-		strncpy(tcp_buffer, result, 600); 
-
-	} else if(strcmp(tcp_buffer, "UPR ") == 0){
+	if(strcmp(tcp_buffer, "UPR ") == 0){
 		bzero(tcp_buffer,600);
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 		
 		strip(tcp_buffer);
 		new_filename = tcp_buffer;
-		std::cout << "Filename: " << new_filename << std::endl;
+		//Process the UPR command
 		char* result = this->UPR_command(tcp_buffer);
 		strncpy(tcp_buffer, result, 600);
+		//Send back the answer
+		send(accept_fd_tcp,tcp_buffer,sizeof(result),0);
+		//if new, process the file upload.
+		if(strcmp(tcp_buffer, "AWR new\n") == 0) {
+			bzero(tcp_buffer,600);
+			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			//Process the UPC
+			result = this->UPC_command(tcp_buffer, new_filename);
+			strncpy(tcp_buffer, result, 600); 
+		}
 	
 	} else {
 		strncpy(tcp_buffer, "ERR\n\0", 5);
 	}
 
-	ret_tcp=send(accept_fd_tcp,tcp_buffer,nread_tcp,0);
+	ret_tcp=send(accept_fd_tcp,tcp_buffer,600,0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
@@ -270,15 +273,10 @@ void CServer::initUDP() {
 		return;
 	}
 
-	while(1){
-		
-		this->processUDP();
-		
-		
-		}
-		
-	std::cout << "vou desligar" << std::endl;
-		
+	while(1){	
+		this->processUDP();	
+	}
+				
 	 //close(fd);
 	 //exit(0);
 }
