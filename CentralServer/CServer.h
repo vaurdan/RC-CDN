@@ -79,7 +79,7 @@ class CServer {
 
     void list_command();
     char* UPR_command( char* filename );
-    char* UPC_command( char* buffer);
+    char* UPC_command( char* buffer, char* new_filename);
 
     bool connectTCP(std::string server, std::string port);
 

@@ -125,7 +125,7 @@ bool CServer::connectTCP(std::string server, std::string port) {
 	return true;
 }
 
-char* CServer::UPC_command(char* buffer) {
+char* CServer::UPC_command(char* buffer, char* new_filename) {
 	char letra;
 	std::string size_buffer = "";
 	std::string result;
@@ -149,17 +149,17 @@ char* CServer::UPC_command(char* buffer) {
 		contador++;
 	}
 
+	int file_size = atoi(size_buffer.c_str());
+	char file_buffer[file_size];
+
 	//Enviar a informação para os storages
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
 		this->connectTCP( server[0], server[1] );
-		std::string command = "ASD\n";
+		std::string command = "UPS " + std::string("olaola.txt") + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" Tenho blue waffle no rabo.\n");
 		send(fd_tcp_ss, command.c_str(), command.size(), 0);
 	}
 
-	int file_size = atoi(size_buffer.c_str());
-	char file_buffer[file_size];
-	
 	int remain_data = file_size;
 	std::cout << "TCP: File has " <<  file_size << " bites" << std::endl;
 	ssize_t len;
@@ -185,7 +185,7 @@ char* CServer::UPC_command(char* buffer) {
 
 void CServer::processTCP() {
 	char tcp_buffer[600];
-	
+	char *new_filename;
 	bzero(tcp_buffer, 600);
 
 	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
@@ -198,7 +198,7 @@ void CServer::processTCP() {
 	if(strcmp(tcp_buffer, "UPC ") == 0){
 		bzero(tcp_buffer,600);
 
-		char* result = this->UPC_command(tcp_buffer);
+		char* result = this->UPC_command(tcp_buffer, new_filename);
 		strncpy(tcp_buffer, result, 600); 
 
 	} else if(strcmp(tcp_buffer, "UPR ") == 0){
@@ -206,6 +206,8 @@ void CServer::processTCP() {
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 		
 		strip(tcp_buffer);
+		new_filename = tcp_buffer;
+		std::cout << "Filename: " << new_filename << std::endl;
 		char* result = this->UPR_command(tcp_buffer);
 		strncpy(tcp_buffer, result, 600);
 	

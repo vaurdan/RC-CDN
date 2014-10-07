@@ -206,7 +206,7 @@ void Client::retrieve(std::string file_name){
 	int i = 0;
 
 	do {
-		len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)
+		len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		i += len;
 		remain_data -= len;
@@ -382,3 +382,5 @@ bool Client::connectionSS() {
 		return false;
 	
 	return true;
+
+}
