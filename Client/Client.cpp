@@ -225,63 +225,81 @@ void Client::upload(std::string up_file_name){
 	
 	
 	std::string command = "UPR " + up_file_name + "\n";
-	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
-	if(connect_id==-1)
-		exit(1);
+	connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
+	if(connect_id ==-1) {
+		std::cout << "Erro de envio." << std::endl;
+		return;	
+	}
 
 	bzero(buffer,600);
-	addrlen_tcp_cs=sizeof(addr_tcp_cs);
-	recieve_id=recvfrom(fd_tcp_cs,buffer,4,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
-	if(recieve_id ==-1)
-		exit(1);
+	recieve_id=recv(fd_tcp_cs,buffer,4,0);
+	if(recieve_id ==-1) {
+		std::cout << "Erro de recepcao." << std::endl;
+		return;	
+	}
+
+	std::cout << "buffer: " << buffer << std::endl;
 	
 	//Leitura do comando do servidor
 	if(strcmp (buffer, "ERR\n") == 0){
 		std::cerr << "Erro, pedido mal formulado" << std::endl;
 		return;
 	}
+
 	bzero(buffer,100);
 	//Leitura de dup ou new
 	recieve_id=recvfrom(fd_tcp_cs,buffer,3,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
-	if(recieve_id ==-1)
-		exit(1);
+	if(recieve_id ==-1) {
+		std::cout << "Erro de recepcao." << std::endl;
+		return;	
+	}
+
+	std::cout << "buffer: " << buffer << std::endl;
 		
 	if(strcmp(buffer, "dup") == 0){
 		std::cerr << "Erro, ficheiro " << up_file_name << " já existe." << std::endl;
 		return;
-		}
-	else{
+	} else{
 		
+		// TCP reconnection
+		this->connectionCS(1);
+
 		up_file=fopen(up_file_name.c_str(), "r");
 		if(up_file == NULL){
 			fprintf(stderr, "Falha a abrir o ficheiro: %s\n", strerror(errno));
 			return;		
 		}
-		
+
 		size = this->file_size(fileno(up_file));
 		//std::cout << size << std::endl;
 		std::ostringstream command_stream;
 		command_stream << "UPC " << size << " ";
 		std::string command = command_stream.str();
-		//std::cout << "Command " << command << std::endl;
-		
-		connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
-		if(connect_id ==-1)
-			exit(1);
+		connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
+		if(connect_id ==-1) {
+			std::cout << "Erro de envio." << std::endl;
+			return;	
+		}
 		int tamanho_lido;
+
 		while((tamanho_lido = fread(data,1,128, up_file)) > 0) {
 			
-			connect_id=sendto(fd_tcp_cs, data, tamanho_lido, 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
-			std::cout << data << std::endl;
-
+			connect_id=send(fd_tcp_cs, data, tamanho_lido, 0);
+			if(connect_id ==-1) {
+				std::cout << "Erro de envio." << std::endl;
+				return;	
+			}
 		}
-		
+
 		std::string barra_n = "\n";
-		connect_id=sendto(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+		connect_id=send(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0);
+		if(connect_id ==-1) {
+			std::cout << "Erro de envio da barra n." << std::endl;
+			return;	
+		}
 		fclose(up_file);
 		
-
-		
+		std::cout << "Ficheiro enviado! " << std::endl;		
 		//connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
 		}
 	}
@@ -411,8 +429,6 @@ void Client::testREQ(std::string test_command_size) {
 		exit(1);
 	//Fechar as ligações
 	//close(fd_udp_cs);
-	
-	
 	
 }
 	

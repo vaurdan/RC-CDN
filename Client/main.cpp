@@ -80,5 +80,7 @@ int main(int argc, char *argv[]){
 
         std::cout << "bwsh > ";
     }
+
+    std::cout << "Fim do programa. " << std::endl;
     
 }
