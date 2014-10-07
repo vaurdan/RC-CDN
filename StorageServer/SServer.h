@@ -53,7 +53,8 @@ class SServer {
 	void processTCP();
 	void initTCP();
 	void req_command(std::string fn);
-	void ups_command();
+	void ups_command(std::string fn, std::string fn_size, std::string fn_data);
+	std::vector<std::string> split(const std::string &s, char delim);
 
 	void strip(char *s);
 
@@ -61,6 +62,7 @@ class SServer {
 
 	template <typename T>
     std::string to_string(T value);
+    std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 
 
 };

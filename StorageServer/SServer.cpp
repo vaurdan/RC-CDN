@@ -32,6 +32,21 @@ std::string SServer::to_string(T value)
 	return os.str() ;
 }
 
+std::vector<std::string> &SServer::split(const std::string &s, char delim, std::vector<std::string> &elems) {
+	std::stringstream ss(s);
+	std::string item;
+	while (std::getline(ss, item, delim)) {
+		elems.push_back(item);
+	}
+	return elems;
+}
+
+
+std::vector<std::string> SServer::split(const std::string &s, char delim) {
+	std::vector<std::string> elems;
+	split(s, delim, elems);
+	return elems;
+}
 void SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
 	std::cout << ":::: Creating Storage Server Dir ::::" << std::endl;
@@ -115,8 +130,62 @@ void SServer::req_command(std::string fn) {
 }
 
 
-void SServer::ups_command(){
+void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_data){
+
+	FILE *ficheiro_recebido;
+	int remain_data = 0;
+	ssize_t len;
+	std::string size_buffer = "";
+	char ups_buffer[600];
+	int result_tcp_fnsize;
+	std::string ups_response;
+
+	if( ! (std::istringstream(fn_size) >> result_tcp_fnsize) ) result_tcp_fnsize = 0;
+
+
 	std::cout << "TCP: UPS requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+
+	bzero(ups_buffer,100);
+
+	char file_buffer[result_tcp_fnsize];
+	
+	ficheiro_recebido = fopen(fn.c_str(), "w");
+	//std::cout << "Iniciei criação do ficheiro" << std::endl;
+	if(ficheiro_recebido == NULL){
+		//fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
+		ups_response = "REP " + std::string("nok");
+		ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
+		exit(EXIT_FAILURE);		
+	}
+
+	remain_data = result_tcp_fnsize;
+	setbuf(stdout, NULL);
+	
+	/*
+
+	Alterar ainda aqui o recv pois ja temos os dados no arg da funçao ups_command
+
+
+
+	*/
+	do {
+		len = recv(accept_fd_tcp,file_buffer,128,0);
+		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
+		remain_data -= len;
+	} while(len > 0 && (remain_data > 0));
+	fclose(ficheiro_recebido);
+	std::cout << std::endl << " Done! " << std::endl;
+	
+ 
+	
+
+	ups_response = "REP " + std::string("ok");
+	ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
+	if(ret_tcp==-1) {
+		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
+		return;
+	}
+	std::cout << "TCP: Response sent." << std::endl;
 
 
 }
@@ -125,6 +194,13 @@ void SServer::processTCP() {
 	
 	char tcp_buffer[128];
 	bzero(tcp_buffer, 128);
+	std::vector<std::string> in;
+	std::string up_fname;
+	std::string up_fsize;
+	std::string up_fdata;
+	int name_contador=0;
+	int size_contador;
+	int data_contador;
 	// Processamento dos comandos TCP
 		
 		nread_tcp=read(accept_fd_tcp,tcp_buffer,4);
@@ -139,29 +215,42 @@ void SServer::processTCP() {
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
 			this->req_command(tcp_buffer);
 	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
-			//nread_tcp=recv(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
-			char letra;
-			int contador = 0;
-			std::string size_buffer = "";
 
-			while (letra != ' '){
-				if(contador>100) {
-					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
-					return;
-				}
-	
-			ret_tcp=recv(accept_fd_tcp,&letra,1,0);
-			if(letra == ' ')
-				break;
-			
-			size_buffer += letra;
-			contador++;
-			std::cout << "buffer: " << letra << "      contador: " << contador << std::endl;
-
-			}
+			nread_tcp = recv(accept_fd_tcp,tcp_buffer,5000000,0);
 			this->strip(tcp_buffer);
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
-			this->ups_command();
+			std::string up_file_buff(tcp_buffer);
+	
+			while(tcp_buffer[name_contador] != ' '){
+
+				up_fname += tcp_buffer[name_contador];
+				name_contador++;
+				size_contador = name_contador;
+
+			}
+
+			std::cout << "File Name: " << up_fname << std::endl;
+			size_contador++;
+			while(tcp_buffer[size_contador] != ' '){
+
+
+				up_fsize += tcp_buffer[size_contador];
+				size_contador++;
+				data_contador=size_contador;
+			}
+
+			std::cout << "File Size: " << up_fsize << std::endl;
+
+			while(data_contador != up_file_buff.size()){
+
+				up_fdata += tcp_buffer[data_contador];
+				data_contador++;
+			}
+			
+			std::cout << "File Data: " << up_fdata << std::endl;
+
+
+			this->ups_command(up_fname,up_fsize,up_fdata);
 		}
 		
 
