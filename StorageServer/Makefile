@@ -1,6 +1,6 @@
 # Declaration of variables
 CC = g++
-CC_FLAGS = -w
+CC_FLAGS = -w $(INC)
 
 # File names
 EXEC = sserver
@@ -14,7 +14,7 @@ $(EXEC): $(OBJECTS)
 
 # To obtain object files
 %.o: %.cpp
-	$(CC) -c $(CC_FLAGS) $< -o $@
+	$(CC) -c $(CC_FLAGS)  $< -o $@
 
 # To remove generated files
 clean:

@@ -1,6 +1,6 @@
 # Declaration of variables
-CC = g++
-CC_FLAGS = -w
+CC = g++ 
+CC_FLAGS = -w $(INC)
 
 # File names
 EXEC = cserver

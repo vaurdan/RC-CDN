@@ -401,7 +401,6 @@ void Client::testConnection() {
 	//close(fd_udp_cs);
 	
 	
-	
 }
 
 void Client::testREQ(std::string test_command_size) {

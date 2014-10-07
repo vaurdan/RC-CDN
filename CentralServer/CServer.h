@@ -28,7 +28,7 @@
 
 class CServer {
 	
-	public:
+	private:
     
     //definição das variaveis so para testar agora se esta a ser feita ligação
     pid_t pid,pid_udp;
@@ -48,12 +48,21 @@ class CServer {
     socklen_t addrlen_tcp;
     struct sockaddr_in addr_tcp;
     
+    public:
+    //Servidores de Storage
+    std::vector< std::vector<std::string> > storages;
 	
 	public:
 	
 	CServer(char *port) : cs_port(port) {};
    
     void startListening();
+
+	void testConnection();
+
+    void retrieveStorage();
+	
+	private:
 
     void initUDP();
     void processUDP();
@@ -63,13 +72,8 @@ class CServer {
 
     void list_command();
 
-	void testConnection();
-	
-	private:
-	
-
-
-
+    std::vector<std::string> split(const std::string &s, char delim);
+    std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 
 };
 

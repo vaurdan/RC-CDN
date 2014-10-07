@@ -23,10 +23,15 @@
 #include <sys/wait.h>
 
 #include "CServer.h"
+#include "../Client/Client.h"
 
 void CServer::startListening() {
 	std::cout << ":::: Central Server ::::" << std::endl;
 	std::cout << "Listening on port " << cs_port << "..." << std::endl;
+
+	//Retrieve the storages server list
+	this->retrieveStorage();
+
 	//Start the UDP connection
 	pid_udp = fork();
 
@@ -184,5 +189,41 @@ void CServer::initTCP() {
 
 		if(ret_tcp==-1)return;
 	}
+}
+
+void CServer::retrieveStorage() {
+
+	//Criar directório para o Central Server
+	std::ifstream input( "serverlist.txt" );
+	if( !input.good() ) {
+		std::cerr << "ERRO: Impossível ler ficheiro com a lista de servidores." << std::endl;
+		return;
+	}
+	std::string line;
+	while( !input.eof() ) {
+		input >> line;
+		std::vector< std::string > server = split(line, ' ');
+		storages.push_back(server);
+	}
+
+}
+
+/*
+ * Definição das funções de split
+ */
+std::vector<std::string> &CServer::split(const std::string &s, char delim, std::vector<std::string> &elems) {
+	std::stringstream ss(s);
+	std::string item;
+	while (std::getline(ss, item, delim)) {
+		elems.push_back(item);
+	}
+	return elems;
+}
+
+
+std::vector<std::string> CServer::split(const std::string &s, char delim) {
+	std::vector<std::string> elems;
+	split(s, delim, elems);
+	return elems;
 }
 
