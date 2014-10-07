@@ -139,17 +139,18 @@ void SServer::processTCP() {
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
 			this->req_command(tcp_buffer);
 	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
-			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
-			/*char letra;
-	
+			//nread_tcp=recv(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			char letra;
 			int contador = 0;
+			std::string size_buffer = "";
+
 			while (letra != ' '){
 				if(contador>100) {
 					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
 					return;
 				}
 	
-			recieve_id=recvfrom(fd_tcp_ss,&letra,1,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+			ret_tcp=recv(accept_fd_tcp,&letra,1,0);
 			if(letra == ' ')
 				break;
 			
@@ -157,7 +158,7 @@ void SServer::processTCP() {
 			contador++;
 			std::cout << "buffer: " << letra << "      contador: " << contador << std::endl;
 
-			}*/
+			}
 			this->strip(tcp_buffer);
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
 			this->ups_command();
