@@ -47,7 +47,8 @@ class CServer {
 
     socklen_t addrlen_tcp;
     struct sockaddr_in addr_tcp;
-    
+
+
     public:
     //Servidores de Storage
     std::vector< std::vector<std::string> > storages;
@@ -79,6 +80,9 @@ class CServer {
 
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
+    template <typename T>
+    std::string to_string(T value);
+
 
 };
 
