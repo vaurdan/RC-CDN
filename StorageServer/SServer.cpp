@@ -26,7 +26,7 @@
 
 void SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
-	std::cout << "::::Creating Storage Server Dir" << std::endl;
+	std::cout << ":::: Creating Storage Server Dir ::::" << std::endl;
 	std::string ss_dir = "SS" + std::string(ss_port);
 	std::cout << "Listening on port " << ss_port << "..." << std::endl;
 	mkdir(ss_dir.c_str(),0755);
@@ -39,6 +39,16 @@ void SServer::startListening() {
 void SServer::req_command(std::string fn) {
 	//TODO: Validar o pedido REQ, verificar se EOF (sem ficheiros no servidor)
 	std::cout << "TCP: REQ requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	std::cout << "Ficheiro pedido: " << fn << std::endl;
+	std::string req_dir = "SS" + std::string(ss_port) + "/" + std::string(fn);
+	std::cout << "Directoria onde vou verificar: " << req_dir << std::endl;
+	FILE *req_file;
+
+	
+
+	//req_file =fopen(req_dir.c_str(), "r");
+
+
 	/*responder com REP status size data, status = ok se enviou o ficheiro ou nok 
 	 * caso contrario, size = tamanho dos dados e data = aos proprios dados ou ERR*/
 
