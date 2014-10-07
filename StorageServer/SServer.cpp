@@ -125,8 +125,6 @@ void SServer::initTCP() {
 			this->processTCP();
 			_exit(0);
 		}
-		int status;
-		(void)waitpid(pid, &status, 0);
 
 		//Parent process
 
