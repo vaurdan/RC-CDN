@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <sys/wait.h>
+#include <time.h>
+
 
 #include "CServer.h"
 #include "../Client/Client.h"
@@ -51,7 +53,7 @@ void CServer::startListening() {
 }
 
 void CServer::list_command() {
-	std::srand(std::time(0));
+	std::srand(time(0));
 	int random_server = std::rand() % storages.size();
 
 	std::vector<std::string> server = storages[random_server];

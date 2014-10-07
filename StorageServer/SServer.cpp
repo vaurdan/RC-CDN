@@ -26,8 +26,10 @@
 
 void SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
+	std::cout << "::::Creating Storage Server Dir" << std::endl;
+	std::string ss_dir = "SS" + std::string(ss_port);
 	std::cout << "Listening on port " << ss_port << "..." << std::endl;
-	
+	mkdir(ss_dir.c_str(),0755);
 	//Start the TCP connection.
 	this->initTCP();
 		
