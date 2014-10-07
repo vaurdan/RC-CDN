@@ -205,15 +205,14 @@ void Client::retrieve(std::string file_name){
 	
 	int i = 0;
 
-	while((len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)) > 0 && (remain_data > 0)){
-
+	do {
+		len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss)
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		i += len;
 		remain_data -= len;
 		loadbar(i, file_size);
-		
-		}
-		fclose(ficheiro_recebido);
+	} while(len > 0 && (remain_data > 0));
+	fclose(ficheiro_recebido);
 	std::cout << std::endl << " Done! " << std::endl;
 	
  
