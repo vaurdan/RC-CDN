@@ -54,7 +54,6 @@ void SServer::processTCP() {
 	
 	char tcp_buffer[128];
 	bzero(tcp_buffer, 128); 
-	std::string command;
 	// Processamento dos comandos TCP
 		
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
@@ -64,9 +63,8 @@ void SServer::processTCP() {
 		}
 		std::cout << "Comando : " << tcp_buffer << std::endl;
 		if(strcmp(tcp_buffer, "REQ ") == 0){
-			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,3,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
-			//command(tcp_buffer);
 			this->req_command(tcp_buffer);
 		   }else if(strcmp(tcp_buffer, "UPS ") == 0){
 				nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
@@ -82,6 +80,7 @@ void SServer::processTCP() {
 		return;
 	}
 	std::cout << "TCP: Response sent." << std::endl;
+
 }
 
 void SServer::initTCP() {
