@@ -183,9 +183,12 @@ void Client::retrieve(std::string file_name){
 		
 		size_buffer += letra;
 		contador++;
+		std::cout << "buffer: " << letra << "      contador: " << contador << std::endl;
+
 	}
 	
 	//std::cout << "size_buffer: " << size_buffer << std::endl;
+	std::cout << "buffer: " << buffer << std::endl;
 	
 	file_size = atoi(size_buffer.c_str());
 	char file_buffer[file_size];

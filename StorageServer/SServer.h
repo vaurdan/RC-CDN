@@ -57,6 +57,11 @@ class SServer {
 
 	void strip(char *s);
 
+	private:
+
+	template <typename T>
+    std::string to_string(T value);
+
 
 };
 
