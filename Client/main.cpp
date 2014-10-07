@@ -71,13 +71,7 @@ int main(int argc, char *argv[]){
 		} else if(in.front() == "exit") {
 				std::cout << "Bye!" << std::endl;
 				exit(1);
-        }//APGAR AQUI!!!!!! DEPOIS
-			else if(in.front() == "REQ") {
-				client->testREQ(in.back());
-        }	else if(in.front() == "test") {
-				client->testConnection();
         }
-
         std::cout << "bwsh > ";
     }
 
