@@ -113,7 +113,7 @@ void CServer::processTCP() {
 		bzero(tcp_buffer,600);
 
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
-		std::cout << "buffer: " << tcp_buffer << std::endl;
+		strip(tcp_buffer);
 		char* result = this->UPR_command(tcp_buffer);
 		strncpy(tcp_buffer, result, 600);
 	} else {

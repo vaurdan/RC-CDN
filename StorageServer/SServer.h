@@ -55,6 +55,9 @@ class SServer {
 	void req_command(std::string fn);
 	void ups_command();
 
+	void strip(char *s);
+
+
 };
 
 
