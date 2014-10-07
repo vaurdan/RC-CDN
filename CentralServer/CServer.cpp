@@ -69,18 +69,44 @@ void CServer::list_command() {
 	strncpy(buffer, command.c_str(),command.size());
 }
 
+char* CServer::UPR_command(char* filename) {
+	char temp_buffer[300];
+	std::cout << "FILENAME: " << filename << std::endl;
+	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	// Percorrer os ficheiros e ver se existe.
+	std::vector<std::string> files = this->retrieveFiles();
+	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
+		std::cout << filename << " == " << ((std::string)*it).c_str() << std::endl;
+		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
+			std::string command = "AWR dup\n\0";
+			strncpy(temp_buffer,command.c_str(), command.size());
+			return temp_buffer;
+
+		}
+	}
+	std::string command = "AWR new\n\0";
+	strncpy(temp_buffer,command.c_str(), command.size());
+	return temp_buffer;
+
+}
+
 void CServer::processTCP() {
 	char tcp_buffer[600];
 	bzero(tcp_buffer, 600);
-	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,600,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+	nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,4,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 	if(nread_tcp==-1) {
 		std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
 		return;
 	}
 
 	// Processamento dos comandos TCP
-	if(strcmp(tcp_buffer, "test\n") == 0){
-		std::cout << "TCP: Test command recieved." << std::endl;
+	if(strcmp(tcp_buffer, "UPR ") == 0){
+		bzero(tcp_buffer,600);
+
+		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+		std::cout << "buffer: " << tcp_buffer << std::endl;
+		char* result = this->UPR_command(tcp_buffer);
+		strncpy(tcp_buffer, result, 600);
 	} else {
 		strncpy(tcp_buffer, "ERR\n\0", 5);
 	}
@@ -90,7 +116,7 @@ void CServer::processTCP() {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
 	}
-	std::cout << "TCP: Response sent." << std::endl;
+	std::cout << "TCP: Response sent: " << tcp_buffer << std::endl;
 }
 
 void CServer::processUDP() {
@@ -257,3 +283,14 @@ std::vector<std::string> CServer::split(const std::string &s, char delim) {
 	return elems;
 }
 
+void CServer::strip(char *s) {
+    char *p2 = s;
+    while(*s != '\0') {
+    	if(*s != '\t' && *s != '\n') {
+    		*p2++ = *s++;
+    	} else {
+    		++s;
+    	}
+    }
+    *p2 = '\0';
+}

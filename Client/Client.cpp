@@ -226,21 +226,16 @@ void Client::upload(std::string up_file_name){
 	
 	std::string command = "UPR " + up_file_name + "\n";
 	connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
-	std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id==-1)
 		exit(1);
 
-	std::cout << "Buffer: " << buffer << std::endl;
 	bzero(buffer,600);
 	addrlen_tcp_cs=sizeof(addr_tcp_cs);
 	recieve_id=recvfrom(fd_tcp_cs,buffer,4,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
-	std::cout << "Buffer: " << buffer << std::endl;
-	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
 	
 	//Leitura do comando do servidor
-	std::cout << "Buffer: " << buffer << std::endl;
 	if(strcmp (buffer, "ERR\n") == 0){
 		std::cerr << "Erro, pedido mal formulado" << std::endl;
 		return;
@@ -248,12 +243,9 @@ void Client::upload(std::string up_file_name){
 	bzero(buffer,100);
 	//Leitura de dup ou new
 	recieve_id=recvfrom(fd_tcp_cs,buffer,3,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
-	std::cout << "recieve_id com " << recieve_id << std::endl;
 	if(recieve_id ==-1)
 		exit(1);
-	
-	std::cout << "Buffer: " << buffer << "." << std::endl;
-	
+		
 	if(strcmp(buffer, "dup") == 0){
 		std::cerr << "Erro, ficheiro " << up_file_name << " já existe." << std::endl;
 		return;
@@ -262,7 +254,7 @@ void Client::upload(std::string up_file_name){
 		
 		up_file=fopen(up_file_name.c_str(), "r");
 		if(up_file == NULL){
-			fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
+			fprintf(stderr, "Falha a abrir o ficheiro: %s\n", strerror(errno));
 			return;		
 		}
 		

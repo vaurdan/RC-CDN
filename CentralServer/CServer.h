@@ -73,6 +73,9 @@ class CServer {
     void processTCP();
 
     void list_command();
+    char* UPR_command( char* filename );
+
+    void strip(char *s);
 
     std::vector<std::string> split(const std::string &s, char delim);
     std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
