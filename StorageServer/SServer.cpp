@@ -35,22 +35,6 @@ void SServer::startListening() {
 		
 }
 
-std::vector<std::string> &SServer::split(const std::string &s, char delim, std::vector<std::string> &elems) {
-	std::stringstream ss(s);
-	std::string item;
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-	return elems;
-}
-
-std::vector<std::string> SServer::split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
-	split(s, delim, elems);
-	return elems;
-}
-
-
 
 void SServer::req_command(std::string fn) {
 	//TODO: Validar o pedido REQ, verificar se EOF (sem ficheiros no servidor)
