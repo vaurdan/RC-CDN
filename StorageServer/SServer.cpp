@@ -292,12 +292,10 @@ void SServer::initTCP() {
 			std::cout << "TCP: Accept erro: " << strerror(errno) << std::endl;
 			return;
 		}
-		std::cout << "Vou criar um fork..." << std::endl;
 		pid = fork();
 		if( pid == -1 ) {
 			exit(1);
 		} else if( pid == 0 ) {
-			std::cout << "Fork criado..." << std::endl;
 			this->processTCP();
 			_exit(0);
 		}

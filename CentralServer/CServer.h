@@ -49,9 +49,9 @@ class CServer {
     struct sockaddr_in addr_tcp;
 
 
-    int fd_tcp_ss;
-    socklen_t addrlen_tcp_ss;
-    struct sockaddr_in addr_tcp_ss;
+    int *fd_tcp_ss;
+    socklen_t *addrlen_tcp_ss;
+    struct sockaddr_in *addr_tcp_ss;
 
     public:
     //Servidores de Storage
@@ -66,6 +66,8 @@ class CServer {
 	void testConnection();
 
     void retrieveStorage();
+    void connectSS();
+    void disconnectSS();
 
     std::vector<std::string> retrieveFiles();
 	
@@ -81,7 +83,7 @@ class CServer {
     char* UPR_command( char* filename );
     char* UPC_command( char* buffer, char* new_filename);
 
-    bool connectTCP(std::string server, std::string port);
+    bool connectTCP(int i, std::string server, std::string port);
 
     void strip(char *s);
 

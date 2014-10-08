@@ -61,6 +61,37 @@ void CServer::startListening() {
 	}
 }
 
+void CServer::connectSS() {
+	int storages_amount = storages.size();
+	std::cout << storages_amount << " storage servers found. Initializing the connection..." << std::endl;
+
+	this->fd_tcp_ss = (int*) malloc(sizeof(int)*storages_amount);
+	this->addrlen_tcp_ss = (socklen_t*) malloc(sizeof(socklen_t)*storages_amount);
+	this->addr_tcp_ss = (struct sockaddr_in*) malloc(sizeof(struct sockaddr_in)*storages_amount);
+
+	int i = 0;
+
+	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
+		std::vector<std::string> server = *it;
+		std::cout << "Connecting to SS #" << i << ": " << server[0] << ":" << server[1] << "..."; 
+		if( this->connectTCP( i++, server[0], server[1] ) )
+			std::cout << " done!" << std::endl;
+		else {
+			std::cout << " error!" << std::endl;
+		}
+
+	}
+}
+
+void CServer::disconnectSS() {
+	int storages_amount = storages.size();
+	int i = 0;
+
+	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
+		close(fd_tcp_ss[i++]);
+	}
+}
+
 void CServer::list_command() {
 	std::srand(time(0));
 	int random_server = std::rand() % storages.size();
@@ -80,7 +111,7 @@ void CServer::list_command() {
 
 
 
-bool CServer::connectTCP(std::string server, std::string port) {
+bool CServer::connectTCP(int i, std::string server, std::string port) {
 	
 	
 	struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
@@ -93,13 +124,13 @@ bool CServer::connectTCP(std::string server, std::string port) {
 	
 	int status = getaddrinfo(server.c_str(), port.c_str(), &host_info, &host_info_list);
 	
-	fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
+	fd_tcp_ss[i]=socket(host_info_list->ai_family, host_info_list->ai_socktype,
 			   host_info_list->ai_protocol);//SOCKET do TCP
 	
-	if(fd_tcp_ss==-1)
+	if(fd_tcp_ss[i]==-1)
 		return false;
 	
-	status = connect(fd_tcp_ss, host_info_list->ai_addr, host_info_list->ai_addrlen);
+	status = connect(fd_tcp_ss[i], host_info_list->ai_addr, host_info_list->ai_addrlen);
 	
 	if(status == -1 )
 		return false;
@@ -154,28 +185,56 @@ char* CServer::UPC_command(char* buffer, char* new_filename) {
 	int file_size = atoi(size_buffer.c_str());
 	char file_buffer[file_size];
 	//Enviar a informação para os storages
+
+	//Start the TCP connection with the Storage Servers
+	this->connectSS();
+
+	int i = 0; // possivel optimização: nao é necessario usar iterador aqui
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
-		this->connectTCP( server[0], server[1] );
-		std::string command = "UPS " + std::string(new_filename) + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" ") + std::string(" Tenho blue waffle no rabo.\n");
-		send(fd_tcp_ss, command.c_str(), command.size(), 0);
+		std::string command = "UPS " + std::string(new_filename) + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" ");
+		std::cout << "TCP: Processing Upload (UPS) to Storage Server #"<<i<<std::endl;
+		std::cout << command << std::endl;
+		send(fd_tcp_ss[i++], command.c_str(), command.size(), 0);
 	}
 
 	int remain_data = file_size;
 	std::cout << "TCP: File has " <<  file_size << " bytes" << std::endl;
 	ssize_t len;
-	int i;
+	i = 0;
 
+	int server_amount = storages.size();
 	do {
+		//Receber do cliente os os bytes necessarios
 		len = recv(accept_fd_tcp,file_buffer,128,0);
-		std::cout << file_buffer;
-		// Send to the SS
+
+		//Enviar para cada SS
+		int server_id = 0;
+		for (int j = 0 ; j < server_amount; j++) {
+			// Send to the SS
+			send(fd_tcp_ss[j], file_buffer, len, 0);
+		}
+
 		i += len;
 		remain_data -= len;
 		
 	} while(len > 0 && (remain_data > 0));
 	
-	std::cout << std::endl << " Done! " << std::endl;
+	// Send the \n
+	char buffers[600][storages.size()] ;
+	for (int j = 0 ; j < server_amount; j++) {
+		bzero(buffers[i], 600);
+		std::string barra_n = "\n";
+		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
+
+		//Now store the response.
+		recv(fd_tcp_ss[j], buffers[i], 50, 0);
+	}
+		
+
+	this->disconnectSS();
+
+	std::cout << "Upload Done!" << std::endl;
 
 	result = "AWC nok";
 	strncpy(buffer, result.c_str(), result.size());
@@ -199,10 +258,11 @@ void CServer::processTCP() {
 		nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
 		
 		strip(tcp_buffer);
-		new_filename = tcp_buffer;
+		strncpy(new_filename, tcp_buffer,100);
 		//Process the UPR command
-		char* result = this->UPR_command(tcp_buffer);
+		char* result = this->UPR_command(new_filename);
 		strncpy(tcp_buffer, result, 600);
+		std::cout << tcp_buffer << std::endl;
 		//Send back the answer
 		send(accept_fd_tcp,tcp_buffer,sizeof(result),0);
 		//if new, process the file upload.
