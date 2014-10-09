@@ -378,6 +378,7 @@ void CServer::initTCP() {
 		}
 
 		pid = fork();
+		std::cout << "Processo criado" << std::endl;
 		if( pid == -1 ) {
 			exit(1);
 		} else if( pid == 0 ) { 

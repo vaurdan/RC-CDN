@@ -153,7 +153,7 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
 	//std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
 		//fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
-		ups_response = "REP " + std::string("nok");
+		ups_response = "AWS " + std::string("nok");
 		ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
 		exit(EXIT_FAILURE);		
 	}
@@ -164,7 +164,17 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
 	/*
 
 	Alterar ainda aqui o recv pois ja temos os dados no arg da funçao ups_command
+	do {
+				read_amount = remain_data;
+				if(read_amount > 128)
+					read_amount = 128;
 
+				len = recv(accept_fd_tcp,tcp_buffer,read_amount,0);
+				fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
+				remain_data -= len;
+
+			} while(len > 0 && (remain_data > 0));
+			fclose(ficheiro_recebido);
 
 
 	*/
@@ -179,7 +189,7 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
  
 	
 
-	ups_response = "REP " + std::string("ok");
+	ups_response = "AWS " + std::string("ok");
 	ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
@@ -201,6 +211,7 @@ void SServer::processTCP() {
 	int name_contador=0;
 	int size_contador;
 	int data_contador;
+	std::string size_buffer = "";
 	// Processamento dos comandos TCP
 		
 		nread_tcp=read(accept_fd_tcp,tcp_buffer,4);
@@ -216,41 +227,43 @@ void SServer::processTCP() {
 			this->req_command(tcp_buffer);
 	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
 
-			nread_tcp = recv(accept_fd_tcp,tcp_buffer,5000000,0);
-			this->strip(tcp_buffer);
-			std::cout << "Buffer com: " << tcp_buffer << std::endl;
-			std::string up_file_buff(tcp_buffer);
-	
-			while(tcp_buffer[name_contador] != ' '){
-
-				up_fname += tcp_buffer[name_contador];
-				name_contador++;
-				size_contador = name_contador;
-
-			}
-
-			std::cout << "File Name: " << up_fname << std::endl;
-			size_contador++;
-			while(tcp_buffer[size_contador] != ' '){
-
-
-				up_fsize += tcp_buffer[size_contador];
-				size_contador++;
-				data_contador=size_contador;
-			}
-
-			std::cout << "File Size: " << up_fsize << std::endl;
-
-			while(data_contador != up_file_buff.size()){
-
-				up_fdata += tcp_buffer[data_contador];
-				data_contador++;
-			}
+			int read_amount;
+			ssize_t len;
 			
-			std::cout << "File Data: " << up_fdata << std::endl;
+			char letra;
+			std::string nome_ficheiro = "";
+	
+			int contador = 0;
+			bzero(tcp_buffer,128);
+			nread_tcp=recv(accept_fd_tcp,tcp_buffer,4,0);
+			if(tcp_buffer == "UPS "){
+			
+			while (letra != ' '){
+				if(contador>100) {
+					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
+					return;
+				}
+	
+				nread_tcp=recv(accept_fd_tcp,&letra,1,0);
+				if(letra == ' ')
+					break;
+		
+				nome_ficheiro += letra;
+				contador++;
+
+				
+
+			}
+			std::cout << "Nome ficheiro: " << nome_ficheiro << std::endl;
+
+			//this->ups_command();
+
+			}
 
 
-			this->ups_command(up_fname,up_fsize,up_fdata);
+			
+			
+			//this->ups_command(up_fname,up_fsize);
 		}
 		
 
