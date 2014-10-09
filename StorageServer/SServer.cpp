@@ -153,7 +153,7 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
 	//std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
 		//fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
-		ups_response = "REP " + std::string("nok");
+		ups_response = "AWS " + std::string("nok");
 		ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
 		exit(EXIT_FAILURE);		
 	}
@@ -168,6 +168,8 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
 
 
 	*/
+
+	/*std::cout << "Devia encravar aqui" << std::endl;
 	do {
 		len = recv(accept_fd_tcp,file_buffer,128,0);
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
@@ -176,10 +178,10 @@ void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_da
 	fclose(ficheiro_recebido);
 	std::cout << std::endl << " Done! " << std::endl;
 	
- 
+ 	*/
 	
 
-	ups_response = "REP " + std::string("ok");
+	ups_response = "AWS " + std::string("ok");
 	ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
@@ -292,6 +294,7 @@ void SServer::initTCP() {
 			std::cout << "TCP: Accept erro: " << strerror(errno) << std::endl;
 			return;
 		}
+		
 		pid = fork();
 		if( pid == -1 ) {
 			exit(1);

@@ -164,6 +164,7 @@ char* CServer::UPC_command(char* buffer, char* new_filename) {
 	std::string result;
 
 	std::cout << "TCP: UPC (Upload) requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+	std::cout << "Buffer: " << buffer << std::endl;
 	// Ler o tamanho do ficheiro
 	int contador = 0;
 	while (letra != ' '){
@@ -175,6 +176,7 @@ char* CServer::UPC_command(char* buffer, char* new_filename) {
 		}
 	
 		nread_tcp=recv(accept_fd_tcp,&letra,1,0);
+		std::cout << letra << std::endl;
 		if(letra == ' ')
 			break;
 		
