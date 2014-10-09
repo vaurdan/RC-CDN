@@ -71,9 +71,12 @@ int main(int argc, char *argv[]){
 		} else if(in.front() == "exit") {
 				std::cout << "Bye!" << std::endl;
 				exit(1);
-        }
-        std::cout << "bwsh > ";
-    }
+        	}else{
+			std::cout << "Comando mal formulado, por favor tente de novo!" << std::endl;
+			return 1;
+        	}
+       		 std::cout << "bwsh > ";
+    	}
 
     std::cout << "Fim do programa. " << std::endl;
     

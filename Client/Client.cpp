@@ -183,7 +183,6 @@ void Client::retrieve(std::string file_name){
 		
 		size_buffer += letra;
 		contador++;
-		std::cout << "buffer: " << letra << "      contador: " << contador << std::endl;
 
 	}
 	
@@ -204,9 +203,13 @@ void Client::retrieve(std::string file_name){
 	setbuf(stdout, NULL);
 	
 	int i = 0;
-
+	int read_amount;
 	do {
-		len = recvfrom(fd_tcp_ss,file_buffer,128,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+		read_amount = remain_data;
+		if(read_amount > 128)
+			read_amount = 128;
+	
+		len = recvfrom(fd_tcp_ss,file_buffer,read_amount,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		i += len;
 		remain_data -= len;
