@@ -1,5 +1,6 @@
 #include "SServer.h"
 #include <istream>
+#include <signal.h>
 
 int main(int argc, char *argv[]){
 	
