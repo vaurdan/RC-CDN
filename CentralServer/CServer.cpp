@@ -23,7 +23,6 @@
 #include <sys/wait.h>
 #include <time.h>
 
-
 #include "CServer.h"
 #include "../Client/Client.h"
 
@@ -66,7 +65,7 @@ void CServer::startListening() {
 }
 
 void CServer::connectSS() {
-	int storages_amount = storages.size();
+	int storages_amount = storages.size() + 2;
 	std::cout << storages_amount << " storage servers found. Initializing the connection..." << std::endl;
 
 	this->fd_tcp_ss = (int*) malloc(sizeof(int)*storages_amount);
@@ -81,7 +80,7 @@ void CServer::connectSS() {
 		if( this->connectTCP( i++, server[0], server[1] ) )
 			std::cout << " done!" << std::endl;
 		else {
-			std::cout << " error!" << std::endl;
+			std::cout << " error! " << strerror(errno) << std::endl;
 		}
 
 	}
@@ -98,12 +97,16 @@ void CServer::disconnectSS() {
 
 void CServer::list_command() {
 	std::srand(time(0));
+
+	//Precisamos de reler os ficheiros porque como é um processo diferente nao tem acesso a memoria do outro processo
+	this->retrieveFiles();
+
 	int random_server = std::rand() % storages.size();
-	int files_count = this->file_list.size();
+	int files_count = this->file_list->size();
 
 	std::vector<std::string> server = storages[random_server];
 	std::string command = "AWL " + server[0] + " " + server[1] + " " + this->to_string(files_count);
-	for (std::vector<std::string>::iterator it = this->file_list.begin() ; it != this->file_list.end(); ++it)
+	for (std::vector<std::string>::iterator it = this->file_list->begin() ; it != this->file_list->end(); ++it)
 		command += " " + (std::string) *it;
 	command += "\n\0";
 	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
@@ -148,7 +151,7 @@ char* CServer::UPR_command(const char* filename) {
 	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 
 	// Percorrer os ficheiros e ver se existe.
-	for (std::vector<std::string>::iterator it = file_list.begin() ; it != file_list.end(); ++it) {
+	for (std::vector<std::string>::iterator it = file_list->begin() ; it != file_list->end(); ++it) {
 		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
 			std::string command = "AWR dup\n";
 			strncpy(temp_buffer,command.c_str(), command.size());
@@ -188,7 +191,7 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	}
 
 	int file_size = atoi(size_buffer.c_str());
-	char file_buffer[file_size];
+	char file_buffer[129];
 	//Enviar a informação para os storages
 
 	//Start the TCP connection with the Storage Servers
@@ -198,55 +201,62 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
 		std::string command = "UPS " + std::string(new_filename) + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" ");
-		std::cout << "TCP: Processing Upload (UPS) to Storage Server #"<<i<<std::endl;
-		std::cout << command << std::endl;
+		std::cout << "TCP: Sending upload command (UPS) to Storage Server #: "<<i<<std::endl;
+		std::cout << "  " << command << std::endl;
 		send(fd_tcp_ss[i++], command.c_str(), command.size(), 0);
 	}
 
 	int remain_data = file_size;
 	std::cout << "TCP: File has " <<  file_size << " bytes" << std::endl;
 	ssize_t len;
-	i = 0;
 	int read_amount;
 	int server_amount = storages.size();
-	std::cout << "Cheguei aqui" << std::endl;
+	std::cout << "TCP: Starting uploading two the " << server_amount << " servers..." << std::endl;
 	do {
 		read_amount = remain_data;
 		if(read_amount > 128)
 			read_amount = 128;
 
+		std::cout << "TCP: Sending " << read_amount << " bytes block. Remaining " << remain_data << " bytes" << std::endl;
+
 		//Receber do cliente os os bytes necessarios
-		len = recv(accept_fd_tcp,file_buffer,remain_data,0);
+		len = recv(accept_fd_tcp,file_buffer,read_amount,0);
+		if(len == -1) {
+			std::cout << "TCP: Error sending a block: " << strerror(errno) <<  std::endl;
+		}
+		remain_data -= len;
 
 		//Enviar para cada SS
-		int server_id = 0;
-		for (int j = 0 ; j < server_amount; j++) {
+		for (int j = 0 ; j < storages.size(); j++) {
 			// Send to the SS
-			std::cout << "Cheguei aqui" << std::endl;
+			std::cout << storages.size() << " Cheguei aqui j#" << j << std::endl;
 
 			send(fd_tcp_ss[j], file_buffer, len, 0);
 		}
-
-		i += len;
-		remain_data -= len;
 		
 	} while(len > 0 && (remain_data > 0));
 	
 	// Send the \n
+	bool sucess_upload = true;
+	int failed_server;
+	std::cout << "TCP: Sending the final character" << std::endl;
 	char buffers[600][storages.size()] ;
-	for (int j = 0 ; j < server_amount; j++) {
-		bzero(buffers[i], 600);
+	for (int j = 0 ; j < storages.size(); j++) {
+		bzero(buffers[j], 600);
 		std::string barra_n = "\n";
 		std::cout << "Cheguei aqui" << std::endl;
 		
 		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
 
-		//Now store the response.
-		if ( recv(fd_tcp_ss[j], buffers[i], 50, 0) == -1) {
-			std::cerr << "Erro: " << strerror(errno) << std::endl;
-		}
+		recv(fd_tcp_ss[j], buffer, 6, 0); // recebe AWC ok ou AWC no
 
-		std::cout << "Buffer: " << buffers[i] << std::endl; 
+		// Se não tiver sido bem sucessido num dos servidores
+		if(strcmp( buffer, "AWS ok" ) != 0) {
+			sucess_upload = false;
+			failed_server = j;
+			break;
+		}
+		
 	}
 		
 
@@ -255,9 +265,17 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
 	addFileToList( std::string( new_filename ) ) ;
 
-	std::cout << "Upload Done!" << std::endl;
+	//Receive the response from SS
+	std::cout << buffer << std::endl;
+	if(sucess_upload) {
+		std::cout << "TCP: Upload of " << new_filename << " sucessfully..." << std::endl;	
+		result = "AWC ok";
+	} else {
+		std::cout << "TCP: Failed uploading " << new_filename << " on server #" << failed_server << "..." << std::endl;	
+		result = "AWC nok";
+	}
+	std::cout << "TCP: Upload process done!" << std::endl;
 
-	result = "AWC nok";
 	strncpy(buffer, result.c_str(), result.size());
 	return buffer;
 }
@@ -275,24 +293,23 @@ void CServer::processTCP() {
 
 	// Processamento dos comandos TCP
 	if(strcmp(tcp_buffer, "UPR ") == 0){
-		std::cout << "Entrei no processamento de comandos" << std::endl;
+
 		bzero(tcp_buffer,600);
+
 		nread_tcp=recv(accept_fd_tcp,tcp_buffer,30,0);
-		std::cout << "nread_tcp com: " << nread_tcp << std::endl;
 		if(nread_tcp == -1){
 			std::cerr << "Erro no nread_tcp: " << strerror(errno) << std::endl;
 			exit(1);
 		}
 		strip(tcp_buffer);
 		std::string filename(tcp_buffer);
+
 		//Process the UPR command
-		std::cout << "Vou entrar no UPR" << std::endl;
 		char* result = this->UPR_command(filename.c_str());
-		//strncpy(tcp_buffer, result, 600);
-		std::cout << "result: " << result << std::endl;
-		//std::cout << tcp_buffer << std::endl;
+
+
 		//Send back the answer
-		ret_tcp=send(accept_fd_tcp,"AWR new\n",8,0);
+		ret_tcp=send(accept_fd_tcp,result,sizeof(result),0);
 		if(ret_tcp == -1){
 			std::cerr << "Erro no send do UPR: " << strerror(errno) << std::endl;
 			exit(1);
@@ -301,13 +318,24 @@ void CServer::processTCP() {
 		if(strcmp(result, "AWR new\n") == 0) {
 			bzero(tcp_buffer,600);
 			std::cout << "vou fazer recv" << std::endl;
+
+			//Adiconar um timeout muito curto para caso o ficheiro nao seja encontrado
+			struct timeval timeout;      
+		    timeout.tv_sec = 0;
+		    timeout.tv_usec = 500;
+			setsockopt(accept_fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
+                sizeof(timeout));
+
 			nread_tcp=recv(accept_fd_tcp,tcp_buffer,4,0);
-			std::cout << "recv com: " << recv << std::endl;
-			std::cout << "buffer no awr new com: " << tcp_buffer << std::endl;
+
+			if(nread_tcp == -1) {
+				std::cout << "TCP: Error reciving file: " << strerror(errno) << std::endl;
+				return;
+			}
+
 			//Process the UPC
 			result = this->UPC_command(tcp_buffer, filename.c_str());
-			std::cout << "processei o UPC" << std::endl;
-			//strncpy(tcp_buffer, result, 600);
+
 			ret_tcp=send(accept_fd_tcp,result,sizeof(result),0);
 			if(ret_tcp==-1) {
 				std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
@@ -421,15 +449,15 @@ void CServer::initTCP() {
 			return;
 		}
 
-		pid = fork();
+		/*pid = fork();
 		std::cout << "Processo criado" << std::endl;
 		if( pid == -1 ) {
 			exit(1);
-		} else if( pid == 0 ) { 
+		} else if( pid == 0 ) { */
 			this->processTCP();
-			std::cout << "TCP: Process done." << std::endl;
+		/*	std::cout << "TCP: Process done." << std::endl;
 			_exit(0);
-		}
+		}*/
 		//Parent process
 
 		do {
@@ -471,9 +499,12 @@ void CServer::retrieveFiles() {
 		return;
 	}
 	std::string line;
+	std::vector<std::string> *new_files = new std::vector<std::string>();
 	while( std::getline(input, line, '\n') ) {
-		this->file_list.push_back(line);
+		new_files->push_back(line);
 	}
+	delete(this->file_list);
+	this->file_list = new_files;
 
 }
 
@@ -518,21 +549,25 @@ void CServer::close_all() {
 void CServer::addFileToList(std::string filename) {
 
 	//Invertemos o vector para tirar o primeiro ficheiro da lista
-	if(this->file_list.size() > 30) {
-		std::reverse(this->file_list.begin(),this->file_list.end()); 
-		this->file_list.pop_back();
+	if(this->file_list->size() > 30) {
+		std::reverse(this->file_list->begin(),this->file_list->end()); 
+		this->file_list->pop_back();
 		//Voltamos a colocar o vector no sentido certo
-		std::reverse(this->file_list.begin(),this->file_list.end()); 
+		std::reverse(this->file_list->begin(),this->file_list->end()); 
 	}
 
-	this->file_list.push_back(filename);
+	this->file_list->push_back(filename);
 
-	std::cout << "Ficheiros tem " << this->file_list.size() << std::endl;
+	std::cout << "Ficheiros tem " << this->file_list->size() << std::endl;
 
 	//Actualizamos o ficheiro de texto
 	this->updateFiles();
 }
 
 void CServer::updateFiles() {
-	return;
+	std::ofstream ficheiro;
+	ficheiro.open("files.txt");
+	for (std::vector<std::string>::iterator it = this->file_list->begin() ; it != this->file_list->end(); ++it)
+		ficheiro << *it << std::endl;
+	ficheiro.close();
 }

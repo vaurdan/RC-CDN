@@ -1,6 +1,6 @@
 # Declaration of variables
 CC = g++ 
-CC_FLAGS = -w $(INC)
+CC_FLAGS = -w $(INC) -g -rdynamic
 
 # File names
 EXEC = cserver

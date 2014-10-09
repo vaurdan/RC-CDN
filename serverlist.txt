@@ -1,2 +1,2 @@
-localhost 50000
-localhost 50001
+localhost 59000
+localhost 59001

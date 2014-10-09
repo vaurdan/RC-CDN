@@ -56,11 +56,13 @@ class CServer {
     public:
     //Servidores de Storage
     std::vector< std::vector<std::string> > storages;
-    std::vector< std::string > file_list;
+    std::vector< std::string > *file_list;
 	
 	public:
 	
-	CServer(char *port) : cs_port(port) {};
+	CServer(char *port) : cs_port(port) {
+        file_list = new std::vector<std::string>();
+    };
    
     void startListening();
 

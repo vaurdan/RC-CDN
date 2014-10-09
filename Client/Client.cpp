@@ -233,7 +233,7 @@ void Client::upload(std::string up_file_name){
 	connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
 	std::cout << "commando enviado." << std::cout;
 	if(connect_id ==-1) {
-		std::cout << "Erro de envio." << std::endl;
+		std::cout << "Erro de envio: " << strerror(errno) << std::endl;
 		return;	
 	}
 	std::cout << "reconhecido UPR" << std::endl;
@@ -284,22 +284,23 @@ void Client::upload(std::string up_file_name){
 		std::string command = command_stream.str();
 		connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
 		if(connect_id ==-1) {
-			std::cout << "Erro de envio." << std::endl;
+			std::cout << "Erro de envio 2: " << strerror(errno) << std::endl;
 			return;	
 		}
 		int tamanho_lido;
 		do{	
 			
-			tamanho_lido = read(fileno(up_file),data, 128);
+			tamanho_lido = fread(data, 1, 128, up_file);
 			if(tamanho_lido == -1){
-			std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
+				std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
 			}
 			std::cout << "Data: " << data << std::endl;
 			connect_id=send(fd_tcp_cs, data, tamanho_lido, 0);
 			if(connect_id ==-1) {
-				std::cout << "Erro de envio." << std::endl;
+				std::cout << "Erro de envio ciclo: " << strerror(errno) << std::endl;
 				return;	
 			}
+
 		}while(tamanho_lido > 0);
 			
 		std::cout << tamanho_lido << std::endl;
@@ -310,11 +311,18 @@ void Client::upload(std::string up_file_name){
 			return;	
 		}
 		fclose(up_file);
-		
-		std::cout << "Ficheiro enviado! " << std::endl;		
-		//connect_id=sendto(fd_tcp_cs, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_cs, sizeof(addr_tcp_cs));
+
+		//Verificar se o ficheiro foi enviado, e responder de acordo com isso
+		recv(fd_tcp_cs, buffer, 6, 0); // recebe AWC ok ou AWC no
+		if(strcmp( buffer, "AWC ok" ) == 0) {
+			std::cout << "Ficheiro " << up_file_name << " enviado com sucesso..." << std::endl;	
+		} else {
+			std::cout << "Ocorreu um erro a enviar o  " << up_file_name << "." << std::endl;	
+
 		}
+		
 	}
+}
 	
 int Client::file_size(int fd){
 	struct stat stat_buf;

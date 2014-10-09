@@ -89,9 +89,9 @@ void SServer::REQ_command(std::string fn) {
 			std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 			return;
 		}
-	std::cout << "TCP: Response sent." << std::endl;
+		std::cout << "TCP: No file provided." << std::endl;
 
-		exit(EXIT_FAILURE);		
+		return;		
 	}
 
 	fseek(req_file, 0, SEEK_END);
@@ -163,13 +163,17 @@ void SServer::UPS_command(std::string fn, std::string fn_size){
 	do {
 		read_amount = remain_data;
 		if(read_amount > 128)
-		read_amount = 128;
+			read_amount = 128;
 
+
+		std::cout << "Tentativa de ler um bloco de " << read_amount << " bytes. Faltam " << remain_data << std::endl;
 		len = recv(accept_fd_tcp,ups_buffer,read_amount,0);
-		fwrite(ups_buffer, sizeof(char), len, ficheiro_recebido);
 		remain_data -= len;
 
-	}while(len > 0 && (remain_data > 0));
+		std::cout << "Lido " << ups_buffer << std::endl;
+		fwrite(ups_buffer, sizeof(char), len, ficheiro_recebido);
+
+	} while(len > 0);
 	
 	fclose(ficheiro_recebido);
 
@@ -179,7 +183,7 @@ void SServer::UPS_command(std::string fn, std::string fn_size){
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
 	}
-	std::cout << "TCP: Response sent." << std::endl;
+	std::cout << "TCP: Response " << ups_response << " sent." << std::endl;
 
 
 }
