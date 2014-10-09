@@ -43,6 +43,10 @@ void CServer::startListening() {
 	//Retrieve the storages server list
 	this->retrieveStorage();
 
+	//Read the files list
+	this->retrieveFiles();
+
+
 	//Start the UDP connection
 	pid_udp = fork();
 
@@ -95,7 +99,6 @@ void CServer::disconnectSS() {
 void CServer::list_command() {
 	std::srand(time(0));
 	int random_server = std::rand() % storages.size();
-	std::vector<std::string> files = this->retrieveFiles();
 	int files_count = files.size();
 
 	std::vector<std::string> server = storages[random_server];
@@ -143,8 +146,8 @@ char* CServer::UPR_command(const char* filename) {
 	bzero(temp_buffer, 300);
 	std::cout << "TCP: ::: Starting upload " << filename << " ::: " << std::endl;
 	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
+
 	// Percorrer os ficheiros e ver se existe.
-	std::vector<std::string> files = this->retrieveFiles();
 	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
 		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
 			std::string command = "AWR dup\n";
@@ -204,11 +207,15 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	std::cout << "TCP: File has " <<  file_size << " bytes" << std::endl;
 	ssize_t len;
 	i = 0;
-
+	int read_amount;
 	int server_amount = storages.size();
 	do {
+		read_amount = remain_data;
+		if(read_amount > 128)
+			read_amount = 128;
+
 		//Receber do cliente os os bytes necessarios
-		len = recv(accept_fd_tcp,file_buffer,128,0);
+		len = recv(accept_fd_tcp,file_buffer,remain_data,0);
 
 		//Enviar para cada SS
 		int server_id = 0;
@@ -230,11 +237,18 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
 
 		//Now store the response.
-		recv(fd_tcp_ss[j], buffers[i], 50, 0);
+		/*if ( recv(fd_tcp_ss[j], buffers[i], 50, 0) == -1) {
+			std::cerr << "Erro: " << strerror(errno) << std::endl;
+		}
+
+		std::cout << "Buffer: " << buffers[i] << std::endl; */
 	}
 		
 
 	this->disconnectSS();
+
+	//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
+	addFileToList( std::string( new_filename ) ) ;
 
 	std::cout << "Upload Done!" << std::endl;
 
@@ -427,21 +441,18 @@ void CServer::retrieveStorage() {
 
 }
 
-std::vector<std::string> CServer::retrieveFiles() {
-
-	std::vector<std::string> files;
+void CServer::retrieveFiles() {
 
 	std::ifstream input( "files.txt" );
 	if( !input.good() ) {
 		std::cerr << "ERRO: Impossível ler ficheiro com a lista de ficheiros." << std::endl;
-		return std::vector<std::string>();
+		return;
 	}
 	std::string line;
 	while( std::getline(input, line, '\n') ) {
-		files.push_back(line);
+		this->files.push_back(line);
 	}
 
-	return files;
 }
 
 /*
@@ -480,4 +491,29 @@ void CServer::close_all() {
 		this->disconnectSS();
 	close(fd_tcp);
 	close(fd_udp);
+}
+
+void CServer::addFileToList(std::string filename) {
+	std::vector<std::string> ficheiros = this->files;
+
+	//Invertemos o vector para tirar o primeiro ficheiro da lista
+	if(ficheiros.size() > 30) {
+		std::reverse(ficheiros.begin(),ficheiros.end()); 
+		ficheiros.pop_back();
+		//Voltamos a colocar o vector no sentido certo
+		std::reverse(ficheiros.begin(),ficheiros.end()); 
+	}
+
+	ficheiros.push_back(filename);
+
+	this->files = ficheiros;
+
+	std::cout << "Ficheiros tem " << files.size() << std::endl;
+
+	//Actualizamos o ficheiro de texto
+	this->updateFiles();
+}
+
+void CServer::updateFiles() {
+	return;
 }

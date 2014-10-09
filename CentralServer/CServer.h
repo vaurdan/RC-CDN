@@ -56,6 +56,7 @@ class CServer {
     public:
     //Servidores de Storage
     std::vector< std::vector<std::string> > storages;
+    std::vector< std::string > files;
 	
 	public:
 	
@@ -71,7 +72,9 @@ class CServer {
 
     void close_all();
 
-    std::vector<std::string> retrieveFiles();
+    void retrieveFiles();
+    void updateFiles();
+    void addFileToList(std::string filename);
 	
 	private:
 
