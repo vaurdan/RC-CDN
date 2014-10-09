@@ -99,11 +99,11 @@ void CServer::disconnectSS() {
 void CServer::list_command() {
 	std::srand(time(0));
 	int random_server = std::rand() % storages.size();
-	int files_count = files.size();
+	int files_count = this->file_list.size();
 
 	std::vector<std::string> server = storages[random_server];
 	std::string command = "AWL " + server[0] + " " + server[1] + " " + this->to_string(files_count);
-	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it)
+	for (std::vector<std::string>::iterator it = this->file_list.begin() ; it != this->file_list.end(); ++it)
 		command += " " + (std::string) *it;
 	command += "\n\0";
 	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
@@ -148,7 +148,7 @@ char* CServer::UPR_command(const char* filename) {
 	std::cout << "TCP: UPR requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 
 	// Percorrer os ficheiros e ver se existe.
-	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it) {
+	for (std::vector<std::string>::iterator it = file_list.begin() ; it != file_list.end(); ++it) {
 		if( strcmp(filename, ((std::string)*it).c_str()) == 0 ) {
 			std::string command = "AWR dup\n";
 			strncpy(temp_buffer,command.c_str(), command.size());
@@ -209,6 +209,7 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	i = 0;
 	int read_amount;
 	int server_amount = storages.size();
+	std::cout << "Cheguei aqui" << std::endl;
 	do {
 		read_amount = remain_data;
 		if(read_amount > 128)
@@ -221,6 +222,8 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 		int server_id = 0;
 		for (int j = 0 ; j < server_amount; j++) {
 			// Send to the SS
+			std::cout << "Cheguei aqui" << std::endl;
+
 			send(fd_tcp_ss[j], file_buffer, len, 0);
 		}
 
@@ -234,14 +237,16 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	for (int j = 0 ; j < server_amount; j++) {
 		bzero(buffers[i], 600);
 		std::string barra_n = "\n";
+		std::cout << "Cheguei aqui" << std::endl;
+		
 		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
 
 		//Now store the response.
-		/*if ( recv(fd_tcp_ss[j], buffers[i], 50, 0) == -1) {
+		if ( recv(fd_tcp_ss[j], buffers[i], 50, 0) == -1) {
 			std::cerr << "Erro: " << strerror(errno) << std::endl;
 		}
 
-		std::cout << "Buffer: " << buffers[i] << std::endl; */
+		std::cout << "Buffer: " << buffers[i] << std::endl; 
 	}
 		
 
@@ -450,7 +455,7 @@ void CServer::retrieveFiles() {
 	}
 	std::string line;
 	while( std::getline(input, line, '\n') ) {
-		this->files.push_back(line);
+		this->file_list.push_back(line);
 	}
 
 }
@@ -494,21 +499,18 @@ void CServer::close_all() {
 }
 
 void CServer::addFileToList(std::string filename) {
-	std::vector<std::string> ficheiros = this->files;
 
 	//Invertemos o vector para tirar o primeiro ficheiro da lista
-	if(ficheiros.size() > 30) {
-		std::reverse(ficheiros.begin(),ficheiros.end()); 
-		ficheiros.pop_back();
+	if(this->file_list.size() > 30) {
+		std::reverse(this->file_list.begin(),this->file_list.end()); 
+		this->file_list.pop_back();
 		//Voltamos a colocar o vector no sentido certo
-		std::reverse(ficheiros.begin(),ficheiros.end()); 
+		std::reverse(this->file_list.begin(),this->file_list.end()); 
 	}
 
-	ficheiros.push_back(filename);
+	this->file_list.push_back(filename);
 
-	this->files = ficheiros;
-
-	std::cout << "Ficheiros tem " << files.size() << std::endl;
+	std::cout << "Ficheiros tem " << this->file_list.size() << std::endl;
 
 	//Actualizamos o ficheiro de texto
 	this->updateFiles();
