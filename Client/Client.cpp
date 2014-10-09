@@ -288,16 +288,21 @@ void Client::upload(std::string up_file_name){
 			return;	
 		}
 		int tamanho_lido;
-
-		while((tamanho_lido = fread(data,1,128, up_file)) > 0) {
+		do{	
 			
+			tamanho_lido = read(fileno(up_file),data, 128);
+			if(tamanho_lido == -1){
+			std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
+			}
+			std::cout << "Data: " << data << std::endl;
 			connect_id=send(fd_tcp_cs, data, tamanho_lido, 0);
 			if(connect_id ==-1) {
 				std::cout << "Erro de envio." << std::endl;
 				return;	
 			}
-		}
-
+		}while(tamanho_lido > 0);
+			
+		std::cout << tamanho_lido << std::endl;
 		std::string barra_n = "\n";
 		connect_id=send(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0);
 		if(connect_id ==-1) {

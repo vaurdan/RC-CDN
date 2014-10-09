@@ -28,7 +28,9 @@ int main(int argc, char *argv[]){
     sigaction(SIGINT, &sigIntHandler, NULL);
     signal (SIGINT,my_handler);
 
-
+    void(*old_handler)(int);
+    if((old_handler=signal(SIGPIPE,SIG_IGN))==SIG_ERR)
+        exit(1);
     if(argc == 1){
         host_name = (char*) malloc(sizeof(char) * 128);
         gethostname(host_name, 128);

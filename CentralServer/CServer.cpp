@@ -288,30 +288,47 @@ void CServer::processTCP() {
 		//Process the UPR command
 		std::cout << "Vou entrar no UPR" << std::endl;
 		char* result = this->UPR_command(filename.c_str());
-		strncpy(tcp_buffer, result, 600);
-		std::cout << tcp_buffer << std::endl;
+		//strncpy(tcp_buffer, result, 600);
+		std::cout << "result: " << result << std::endl;
+		//std::cout << tcp_buffer << std::endl;
 		//Send back the answer
-		send(accept_fd_tcp,tcp_buffer,sizeof(result),0);
+		ret_tcp=send(accept_fd_tcp,"AWR new\n",8,0);
+		if(ret_tcp == -1){
+			std::cerr << "Erro no send do UPR: " << strerror(errno) << std::endl;
+			exit(1);
+		}
 		//if new, process the file upload.
-		if(strcmp(tcp_buffer, "AWR new\n") == 0) {
+		if(strcmp(result, "AWR new\n") == 0) {
 			bzero(tcp_buffer,600);
+			std::cout << "vou fazer recv" << std::endl;
 			nread_tcp=recv(accept_fd_tcp,tcp_buffer,4,0);
+			std::cout << "recv com: " << recv << std::endl;
+			std::cout << "buffer no awr new com: " << tcp_buffer << std::endl;
 			//Process the UPC
 			result = this->UPC_command(tcp_buffer, filename.c_str());
-			strncpy(tcp_buffer, result, 600); 
+			std::cout << "processei o UPC" << std::endl;
+			//strncpy(tcp_buffer, result, 600);
+			ret_tcp=send(accept_fd_tcp,result,sizeof(result),0);
+			if(ret_tcp==-1) {
+				std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
+				return;
+			}
+
+			std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl; 
 		}
 	
 	} else {
 		strncpy(tcp_buffer, "ERR\n\0", 5);
-	}
-
-	ret_tcp=send(accept_fd_tcp,tcp_buffer,600,0);
+		ret_tcp=send(accept_fd_tcp,tcp_buffer,600,0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
 	}
 
 	std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl;
+	}
+
+	
 }
 
 void CServer::processUDP() {
