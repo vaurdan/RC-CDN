@@ -82,8 +82,8 @@ class CServer {
     void processTCP();
 
     void list_command();
-    char* UPR_command( char* filename );
-    char* UPC_command( char* buffer, char* new_filename);
+    char* UPR_command( const char* filename );
+    char* UPC_command( char* buffer, const char* new_filename);
 
     bool connectTCP(int i, std::string server, std::string port);
 

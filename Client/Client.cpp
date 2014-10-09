@@ -236,9 +236,10 @@ void Client::upload(std::string up_file_name){
 		std::cout << "Erro de envio." << std::endl;
 		return;	
 	}
-
+	std::cout << "reconhecido UPR" << std::endl;
 	bzero(buffer,600);
 	recieve_id=recv(fd_tcp_cs,buffer,4,0);
+	std::cout << "receive com: " << recieve_id << std::endl;
 	if(recieve_id ==-1) {
 		std::cout << "Erro de recepcao." << std::endl;
 		return;	
@@ -277,7 +278,7 @@ void Client::upload(std::string up_file_name){
 		}
 
 		size = this->file_size(fileno(up_file));
-		//std::cout << size << std::endl;
+		std::cout << size << std::endl;
 		std::ostringstream command_stream;
 		command_stream << "UPC " << size << " ";
 		std::string command = command_stream.str();

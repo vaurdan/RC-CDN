@@ -130,68 +130,53 @@ void SServer::req_command(std::string fn) {
 }
 
 
-void SServer::ups_command(std::string fn, std::string fn_size, std::string fn_data){
+void SServer::ups_command(std::string fn, std::string fn_size){
 
 	FILE *ficheiro_recebido;
 	int remain_data = 0;
 	ssize_t len;
-	std::string size_buffer = "";
-	char ups_buffer[600];
+	char ups_buffer[128];
 	int result_tcp_fnsize;
 	std::string ups_response;
+	int read_amount = 128;
 
 	if( ! (std::istringstream(fn_size) >> result_tcp_fnsize) ) result_tcp_fnsize = 0;
-
-
+	
+	fn = "SS" + std::string(ss_port) + std::string("/") + fn;
+	std::cout << "Directoria: " << fn << std::endl;
 	std::cout << "TCP: UPS requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 
 	bzero(ups_buffer,100);
 
 	char file_buffer[result_tcp_fnsize];
-	
+	std::cout << "File size: " << result_tcp_fnsize << std::endl;
 	ficheiro_recebido = fopen(fn.c_str(), "w");
-	//std::cout << "Iniciei criação do ficheiro" << std::endl;
+	std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
-		//fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
-		ups_response = "AWS " + std::string("nok");
+		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
+		ups_response = "AWS nok\n";
 		ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
-		exit(EXIT_FAILURE);		
+		return;
 	}
 
 	remain_data = result_tcp_fnsize;
-	setbuf(stdout, NULL);
 	
-	/*
-
-	Alterar ainda aqui o recv pois ja temos os dados no arg da funçao ups_command
+	
+	bzero(ups_buffer,128);
 	do {
-				read_amount = remain_data;
-				if(read_amount > 128)
-					read_amount = 128;
+		read_amount = remain_data;
+		if(read_amount > 128)
+		read_amount = 128;
 
-				len = recv(accept_fd_tcp,tcp_buffer,read_amount,0);
-				fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
-				remain_data -= len;
-
-			} while(len > 0 && (remain_data > 0));
-			fclose(ficheiro_recebido);
-
-
-	*/
-
-	/*std::cout << "Devia encravar aqui" << std::endl;
-	do {
-		len = recv(accept_fd_tcp,file_buffer,128,0);
-		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
+		len = recv(accept_fd_tcp,ups_buffer,read_amount,0);
+		fwrite(ups_buffer, sizeof(char), len, ficheiro_recebido);
 		remain_data -= len;
-	} while(len > 0 && (remain_data > 0));
-	fclose(ficheiro_recebido);
-	std::cout << std::endl << " Done! " << std::endl;
-	
- 	*/
-	
 
-	ups_response = "AWS " + std::string("ok");
+	}while(len > 0 && (remain_data > 0));
+	
+	fclose(ficheiro_recebido);
+
+	ups_response = "AWS ok\n";
 	ret_tcp=send(accept_fd_tcp,ups_response.c_str(),ups_response.size(),0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
@@ -206,14 +191,12 @@ void SServer::processTCP() {
 	
 	char tcp_buffer[128];
 	bzero(tcp_buffer, 128);
-	std::vector<std::string> in;
-	std::string up_fname;
-	std::string up_fsize;
-	std::string up_fdata;
-	int name_contador=0;
-	int size_contador;
-	int data_contador;
-	std::string size_buffer = "";
+	int read_amount;
+	ssize_t len;
+	char letra;
+	char letra2;
+	std::string nome_ficheiro = "";
+	std::string tamanho_ficheiro = "";
 	// Processamento dos comandos TCP
 		
 		nread_tcp=read(accept_fd_tcp,tcp_buffer,4);
@@ -223,26 +206,22 @@ void SServer::processTCP() {
 		}
 		std::cout << "Comando : " << tcp_buffer << std::endl;
 		if(strcmp(tcp_buffer, "REQ ") == 0){
-			nread_tcp=recvfrom(accept_fd_tcp,tcp_buffer,30,0,(struct sockaddr*)&addr_tcp,&addrlen_tcp);
+			nread_tcp=recv(accept_fd_tcp,tcp_buffer,30,0);
 			this->strip(tcp_buffer);
 			std::cout << "Buffer com: " << tcp_buffer << std::endl;
 			this->req_command(tcp_buffer);
 	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
+		   
+		   std::cout << "Entrei no processamento do comando UPS" << std::endl;
 
-			int read_amount;
-			ssize_t len;
 			
-			char letra;
-			std::string nome_ficheiro = "";
 	
 			int contador = 0;
-			bzero(tcp_buffer,128);
-			nread_tcp=recv(accept_fd_tcp,tcp_buffer,4,0);
-			if(tcp_buffer == "UPS "){
+			int contador_2 = 0;
 			
 			while (letra != ' '){
 				if(contador>100) {
-					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
+					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o nome do mesmo." << std::endl;
 					return;
 				}
 	
@@ -257,18 +236,25 @@ void SServer::processTCP() {
 
 			}
 			std::cout << "Nome ficheiro: " << nome_ficheiro << std::endl;
+			
+			while (letra2 != ' '){
+				if(contador_2>100) {
+					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
+					return;
+				}
+	
+				nread_tcp=recv(accept_fd_tcp,&letra2,1,0);
+				if(letra2 == ' ')
+					break;
+		
+				tamanho_ficheiro += letra2;
+				contador_2++;
+			}
+			std::cout << "Tamanho ficheiro: " << tamanho_ficheiro << std::endl;			
 
-			//this->ups_command();
+			this->ups_command(nome_ficheiro, tamanho_ficheiro);
 
 			}
-
-
-			
-			
-			//this->ups_command(up_fname,up_fsize);
-		}
-		
-
 
 }
 
