@@ -52,8 +52,8 @@ class SServer {
 	void list_command();
 	void processTCP();
 	void initTCP();
-	void req_command(std::string fn);
-	void ups_command(std::string fn, std::string fn_size);
+	void REQ_command(std::string fn);
+	void UPS_command(std::string fn, std::string fn_size);
 	std::vector<std::string> split(const std::string &s, char delim);
 
 	void strip(char *s);

@@ -23,7 +23,7 @@
 
 #include "SServer.h"
 
-
+//Definição da função to_string devido a problema de compatibilidade com o compilador
 template <typename T>
 std::string SServer::to_string(T value)
 {
@@ -32,6 +32,7 @@ std::string SServer::to_string(T value)
 	return os.str() ;
 }
 
+//recebe uma string e faz o split dado um certo delimitador returnando os vários elementos
 std::vector<std::string> &SServer::split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss(s);
 	std::string item;
@@ -41,26 +42,30 @@ std::vector<std::string> &SServer::split(const std::string &s, char delim, std::
 	return elems;
 }
 
-
+//recebe uma string e faz o split dado um certo delimitador returnando os vários elementos
 std::vector<std::string> SServer::split(const std::string &s, char delim) {
 	std::vector<std::string> elems;
 	split(s, delim, elems);
 	return elems;
 }
+
+//inicialização dos storage server com a criação das pastas de cada SS e respectivas portas. Iniciação da ligação TCP.
 void SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
 	std::cout << ":::: Creating Storage Server Dir ::::" << std::endl;
 	std::string ss_dir = "SS" + std::string(ss_port);
 	std::cout << "Listening on port " << ss_port << "..." << std::endl;
+	
+	//criação das directorias dos vários SS
 	mkdir(ss_dir.c_str(),0755);
+	
 	//Start the TCP connection.
 	this->initTCP();
 		
 }
 
-
-void SServer::req_command(std::string fn) {
-	//TODO: Validar o pedido REQ, verificar se EOF (sem ficheiros no servidor)
+//processamento do comando REQ por consequência do pedido retrieve do user.
+void SServer::REQ_command(std::string fn) {
 
 	FILE *req_file;
 
@@ -74,10 +79,8 @@ void SServer::req_command(std::string fn) {
 
 
 	std::cout << "TCP: REQ requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
-	//std::cout << "Ficheiro pedido: " << fn << std::endl;
 	std::string req_dir = "SS" + std::string(ss_port) + "/" + std::string(fn);
 	req_file =fopen(req_dir.c_str(), "r");
-	//std::cout << "Directoria onde vou verificar: " << req_dir << std::endl;
 
 	if(req_file == NULL){
 		req_response = "REP " + std::string("nok");
@@ -94,7 +97,6 @@ void SServer::req_command(std::string fn) {
 	fseek(req_file, 0, SEEK_END);
 	fsize = ftell (req_file);
 	int new_file_size = fsize;
-	std::cout << "tem size: " << fsize << std::endl;
 	rewind (req_file);
 
 	buffer_retrieve = (char*)malloc (sizeof(char)*fsize);
@@ -113,11 +115,9 @@ void SServer::req_command(std::string fn) {
 
 	convert << new_file_size;
 	file_size_result = convert.str();
-	//std::cout << "file size com: " << file_size_result << std::endl;
 	fclose(req_file);
 	
 	req_response = "REP " + std::string("ok ") + file_size_result + std::string(" ") + this->to_string(buffer_retrieve);
-	//std::cout << "response tem: " << req_response << std::endl;
 
 	ret_tcp=send(accept_fd_tcp,req_response.c_str(),req_response.size(),0);
 	if(ret_tcp==-1) {
@@ -129,8 +129,8 @@ void SServer::req_command(std::string fn) {
  
 }
 
-
-void SServer::ups_command(std::string fn, std::string fn_size){
+//processamento do comando UPS por consequência do pedido upload do user.
+void SServer::UPS_command(std::string fn, std::string fn_size){
 
 	FILE *ficheiro_recebido;
 	int remain_data = 0;
@@ -143,15 +143,12 @@ void SServer::ups_command(std::string fn, std::string fn_size){
 	if( ! (std::istringstream(fn_size) >> result_tcp_fnsize) ) result_tcp_fnsize = 0;
 	
 	fn = "SS" + std::string(ss_port) + std::string("/") + fn;
-	std::cout << "Directoria: " << fn << std::endl;
 	std::cout << "TCP: UPS requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
 
 	bzero(ups_buffer,100);
 
 	char file_buffer[result_tcp_fnsize];
-	std::cout << "File size: " << result_tcp_fnsize << std::endl;
 	ficheiro_recebido = fopen(fn.c_str(), "w");
-	std::cout << "Iniciei criação do ficheiro" << std::endl;
 	if(ficheiro_recebido == NULL){
 		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
 		ups_response = "AWS nok\n";
@@ -187,6 +184,7 @@ void SServer::ups_command(std::string fn, std::string fn_size){
 
 }
 
+//processa as ligações TCP com os pedidos do central server
 void SServer::processTCP() {
 	
 	char tcp_buffer[128];
@@ -199,26 +197,22 @@ void SServer::processTCP() {
 	std::string tamanho_ficheiro = "";
 	// Processamento dos comandos TCP
 		
+		//Lẽ os primeiros 4 bytes que pode ser "UPS " ou "REQ "
 		nread_tcp=read(accept_fd_tcp,tcp_buffer,4);
 		if(nread_tcp==-1) {
 			std::cout << "TCP: recv error: " << strerror(errno) << std::endl;
 			return;
 		}
-		std::cout << "Comando : " << tcp_buffer << std::endl;
 		if(strcmp(tcp_buffer, "REQ ") == 0){
 			nread_tcp=recv(accept_fd_tcp,tcp_buffer,30,0);
 			this->strip(tcp_buffer);
-			std::cout << "Buffer com: " << tcp_buffer << std::endl;
-			this->req_command(tcp_buffer);
+			this->REQ_command(tcp_buffer);
 	   } else if(strcmp(tcp_buffer, "UPS ") == 0){
-		   
-		   std::cout << "Entrei no processamento do comando UPS" << std::endl;
-
-			
-	
+		   	
 			int contador = 0;
 			int contador_2 = 0;
 			
+			//leitura do nome do ficheiro, lê x bytes até encontrar um espaço
 			while (letra != ' '){
 				if(contador>100) {
 					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o nome do mesmo." << std::endl;
@@ -235,8 +229,7 @@ void SServer::processTCP() {
 				
 
 			}
-			std::cout << "Nome ficheiro: " << nome_ficheiro << std::endl;
-			
+			//leitura do tamanho do ficheiro, lê x bytes até encontrar um espaço			
 			while (letra2 != ' '){
 				if(contador_2>100) {
 					std::cout << "Ocorreu um erro a transferir o ficheiro: Não foi possivel encontrar o tamanho do mesmo." << std::endl;
@@ -250,14 +243,14 @@ void SServer::processTCP() {
 				tamanho_ficheiro += letra2;
 				contador_2++;
 			}
-			std::cout << "Tamanho ficheiro: " << tamanho_ficheiro << std::endl;			
-
-			this->ups_command(nome_ficheiro, tamanho_ficheiro);
+			//pedido de processamento do comando enviando o nome e tamanho do ficheiro sobrando no buffer os dados que vai escrever.
+			this->UPS_command(nome_ficheiro, tamanho_ficheiro);
 
 			}
 
 }
 
+//inicializações TCP com Servidor Central
 void SServer::initTCP() {
 
 	std::cout << "TCP: Initialization..." << std::endl;
@@ -311,6 +304,7 @@ void SServer::initTCP() {
 		if(ret_tcp==-1)return;
 	}
 }
+
 
 void SServer::strip(char *s) {
     char *p2 = s;
