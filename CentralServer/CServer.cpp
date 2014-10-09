@@ -99,9 +99,9 @@ void CServer::list_command() {
 	int files_count = files.size();
 
 	std::vector<std::string> server = storages[random_server];
-	std::string command = "AWL " + server[0] + " " + server[1] + " " + this->to_string(files_count) + " ";
+	std::string command = "AWL " + server[0] + " " + server[1] + " " + this->to_string(files_count);
 	for (std::vector<std::string>::iterator it = files.begin() ; it != files.end(); ++it)
-		command += (std::string) *it;
+		command += " " + (std::string) *it;
 	command += "\n\0";
 	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
 	std::cout << "UDP: List requested by " << inet_ntoa(addr_udp.sin_addr) << "..." << std::endl;

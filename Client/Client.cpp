@@ -278,7 +278,7 @@ void Client::upload(std::string up_file_name){
 		}
 
 		size = this->file_size(fileno(up_file));
-		//std::cout << size << std::endl;
+		std::cout << size << std::endl;
 		std::ostringstream command_stream;
 		command_stream << "UPC " << size << " ";
 		std::string command = command_stream.str();
