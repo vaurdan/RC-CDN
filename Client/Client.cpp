@@ -388,3 +388,11 @@ bool Client::connectionSS() {
 	return true;
 
 }
+
+void Client::close_all() {
+
+	close(fd_tcp_ss);
+	close(fd_udp_cs);
+	close(fd_tcp_cs);
+
+}

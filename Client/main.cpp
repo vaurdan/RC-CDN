@@ -1,14 +1,34 @@
 #include "Client.h"
 #include <istream>
+#include <signal.h>
 
+Client *client;
 
+void my_handler(int s){
+    std::cout << "\nCTRL+C detectado. Encerrando as ligações..." << std::endl;
+    client->close_all();
+    delete(client);
+    exit(1); 
+
+}
 
 int main(int argc, char *argv[]){
     
     char *host_name = "localhost";
     char *cs_port;
     std::string input;
-   
+    
+    //Registo dos signals
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = my_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
+    signal (SIGINT,my_handler);
+
+
     if(argc == 1){
         host_name = (char*) malloc(sizeof(char) * 128);
         gethostname(host_name, 128);
@@ -43,7 +63,7 @@ int main(int argc, char *argv[]){
     //std::cout << host_name << ":"  << csport << std::endl;
     
     //Fazer a ligação ao servidor pelo cliente
-    Client *client = new Client(host_name, cs_port);
+    client = new Client(host_name, cs_port);
 
 
     std::cout << "bwsh > ";
@@ -78,6 +98,13 @@ int main(int argc, char *argv[]){
        		 std::cout << "bwsh > ";
     	}
 
+
+
+
     std::cout << "Fim do programa. " << std::endl;
+
+    return 0;
     
 }
+
+

@@ -468,3 +468,10 @@ void CServer::strip(char *s) {
     }
     *p2 = '\0';
 }
+
+void CServer::close_all() {
+	if(fd_tcp_ss != NULL)
+		this->disconnectSS();
+	close(fd_tcp);
+	close(fd_udp);
+}

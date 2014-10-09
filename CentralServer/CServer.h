@@ -69,6 +69,8 @@ class CServer {
     void connectSS();
     void disconnectSS();
 
+    void close_all();
+
     std::vector<std::string> retrieveFiles();
 	
 	private:
