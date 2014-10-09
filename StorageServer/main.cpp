@@ -7,6 +7,10 @@ int main(int argc, char *argv[]){
 	std::string input;
 	ss_port = (char*) malloc( sizeof(char) * 10);
     ss_port = PORT;
+
+ 	void(*old_handler)(int);
+    if((old_handler=signal(SIGPIPE,SIG_IGN))==SIG_ERR)
+        exit(1);
 	
 	for(int i = 1; i < argc; i++){
 
