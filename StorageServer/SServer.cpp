@@ -66,6 +66,7 @@ bool SServer::testConnection() {
 
 	int valid_port = atoi(ss_port);
 
+
 	if((fd_tcp=socket(AF_INET,SOCK_STREAM,0))==-1) {
 		std::cout << "TCP: Error initializing the socket";
 		exit(EXIT_FAILURE);
@@ -73,7 +74,7 @@ bool SServer::testConnection() {
 
 	do {
 		//Actualizamos a porta que vamos testar
-		sprintf(this->ss_port, "%d", valid_port);
+		std::string(ss_port) = this->to_string(valid_port);
 
 		//Iniciamos a ligação
 		memset((void*)&addr_tcp,(int)'\0',sizeof(addr_tcp));
@@ -156,9 +157,8 @@ void SServer::REQ_command(std::string fn) {
 		
 		tamanho_lido = fread(data, 1, 128, req_file);
 		if(tamanho_lido == -1){
-			std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
+			std::cerr << "Não foi possivel ler o tamanho do ficheiro: " << strerror(errno) << std::endl;
 		}
-		std::cout << "Data: " << data << std::endl;
 		ret_tcp=send(accept_fd_tcp, data, tamanho_lido, 0);
 		if(ret_tcp ==-1) {
 			std::cout << "Erro de envio ciclo: " << strerror(errno) << std::endl;
@@ -218,11 +218,9 @@ void SServer::UPS_command(std::string fn, std::string fn_size){
 			read_amount = 128;
 
 
-		std::cout << "Tentativa de ler um bloco de " << read_amount << " bytes. Faltam " << remain_data << std::endl;
 		len = recv(accept_fd_tcp,ups_buffer,read_amount,0);
 		remain_data -= len;
 
-		std::cout << "Lido " << ups_buffer << std::endl;
 		fwrite(ups_buffer, sizeof(char), len, ficheiro_recebido);
 
 	} while(len > 0);
@@ -236,7 +234,7 @@ void SServer::UPS_command(std::string fn, std::string fn_size){
 		return;
 	}
 	std::cout << "TCP: Response " << ups_response << " sent." << std::endl;
-
+	std::cout << "TCP: Uploading of file " << fn << " by " << inet_ntoa(addr_tcp.sin_addr) << " done!" << std::endl;
 
 }
 
@@ -313,7 +311,6 @@ void SServer::initTCP() {
 
 	//Testa e inicializa a ligação
 	this->testConnection();
-
 	//criação das directorias dos vários SS
 	std::string ss_dir = "SS" + std::string(ss_port);
 	mkdir(ss_dir.c_str(),0755);

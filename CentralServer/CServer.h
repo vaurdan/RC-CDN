@@ -30,7 +30,6 @@ class CServer {
 	
 	private:
     
-    //definição das variaveis so para testar agora se esta a ser feita ligação
     pid_t pid,pid_udp;
 
     char *cs_port;

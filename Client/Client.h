@@ -72,11 +72,6 @@ public:
     bool connectionCS(int type);
     bool connectionSS();
     inline void loadbar(unsigned int x, unsigned int n, unsigned int w = 50);
-    
-    //APAGAR DEPOIS
-    void testConnection();
-    void testREQ(std::string test_command_size);
-
     void close_all();
     
 private:

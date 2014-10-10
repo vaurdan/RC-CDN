@@ -3,7 +3,7 @@ CC = g++
 CC_FLAGS = -w $(INC) -g -rdynamic
 
 # File names
-EXEC = cserver
+EXEC = CS
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
 

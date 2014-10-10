@@ -35,6 +35,7 @@ std::string CServer::to_string(T value)
 	return os.str() ;
 }
 
+//Inicialização do Central Server
 void CServer::startListening() {
 	std::cout << ":::: Central Server ::::" << std::endl;
 	std::cout << "Listening on port " << cs_port << "..." << std::endl;
@@ -64,9 +65,9 @@ void CServer::startListening() {
 	}
 }
 
+//Conexão com o storage Server
 void CServer::connectSS() {
 	int storages_amount = storages.size() + 2;
-	std::cout << storages_amount << " storage servers found. Initializing the connection..." << std::endl;
 
 	this->fd_tcp_ss = (int*) malloc(sizeof(int)*storages_amount);
 	this->addrlen_tcp_ss = (socklen_t*) malloc(sizeof(socklen_t)*storages_amount);
@@ -86,6 +87,7 @@ void CServer::connectSS() {
 	}
 }
 
+//terminar ligação com storage server
 void CServer::disconnectSS() {
 	int storages_amount = storages.size();
 	int i = 0;
@@ -95,10 +97,10 @@ void CServer::disconnectSS() {
 	}
 }
 
+//procesamento do pedido list pelo user
 void CServer::list_command() {
 	std::srand(time(0));
 
-	//Precisamos de reler os ficheiros porque como é um processo diferente nao tem acesso a memoria do outro processo
 	this->retrieveFiles();
 
 	int random_server = std::rand() % storages.size();
@@ -109,29 +111,28 @@ void CServer::list_command() {
 	for (std::vector<std::string>::iterator it = this->file_list->begin() ; it != this->file_list->end(); ++it)
 		command += " " + (std::string) *it;
 	command += "\n\0";
-	//TODO: Validar o pedido LST, verificar se EOF (sem ficheiros no servidor)
 	std::cout << "UDP: List requested by " << inet_ntoa(addr_udp.sin_addr) << "..." << std::endl;
 	bzero(buffer, 600);
 	strncpy(buffer, command.c_str(),command.size());
 }
 
 
-
+//Inicialização da conexão TCP do CS
 bool CServer::connectTCP(int i, std::string server, std::string port) {
 	
 	
-	struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-	struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+	struct addrinfo host_info;       
+	struct addrinfo *host_info_list; 
 
 	memset(&host_info, 0, sizeof host_info);
 	
-	host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
-	host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+	host_info.ai_family = AF_INET;     
+	host_info.ai_socktype = SOCK_STREAM; 
 	
 	int status = getaddrinfo(server.c_str(), port.c_str(), &host_info, &host_info_list);
 	
 	fd_tcp_ss[i]=socket(host_info_list->ai_family, host_info_list->ai_socktype,
-			   host_info_list->ai_protocol);//SOCKET do TCP
+			   host_info_list->ai_protocol);
 	
 	if(fd_tcp_ss[i]==-1)
 		return false;
@@ -144,6 +145,7 @@ bool CServer::connectTCP(int i, std::string server, std::string port) {
 	return true;
 }
 
+//Processamento do comando UPR
 char* CServer::UPR_command(const char* filename) {
 	char temp_buffer[300];
 	bzero(temp_buffer, 300);
@@ -163,14 +165,13 @@ char* CServer::UPR_command(const char* filename) {
 	strncpy(temp_buffer,command.c_str(), command.size());
 	return temp_buffer;
 }
-
+//Processamento do comando UPC
 char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	char letra = 'a';
 	std::string size_buffer = "";
 	std::string result;
 
 	std::cout << "TCP: UPC (Upload) requested by " << inet_ntoa(addr_tcp.sin_addr) << "..." << std::endl;
-	std::cout << "Buffer: " << buffer << std::endl;
 	// Ler o tamanho do ficheiro
 	int contador = 0;
 	while (letra != ' '){
@@ -182,7 +183,6 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 		}
 	
 		nread_tcp=recv(accept_fd_tcp,&letra,1,0);
-		std::cout << letra << std::endl;
 		if(letra == ' ')
 			break;
 		
@@ -197,7 +197,7 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	//Start the TCP connection with the Storage Servers
 	this->connectSS();
 
-	int i = 0; // possivel optimização: nao é necessario usar iterador aqui
+	int i = 0;
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
 		std::string command = "UPS " + std::string(new_filename) + std::string(" ") + std::string(size_buffer.c_str()) + std::string(" ");
@@ -244,7 +244,6 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	for (int j = 0 ; j < storages.size(); j++) {
 		bzero(buffers[j], 600);
 		std::string barra_n = "\n";
-		std::cout << "Cheguei aqui" << std::endl;
 		
 		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
 
@@ -264,7 +263,6 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 
 
 	//Receive the response from SS
-	std::cout << buffer << std::endl;
 	if(sucess_upload) {
 		//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
 		addFileToList( std::string( new_filename ) ) ;
@@ -317,7 +315,6 @@ void CServer::processTCP() {
 		//if new, process the file upload.
 		if(strcmp(result, "AWR new\n") == 0) {
 			bzero(tcp_buffer,600);
-			std::cout << "vou fazer recv" << std::endl;
 
 			//Adiconar um timeout muito curto para caso o ficheiro nao seja encontrado
 			struct timeval timeout;      
@@ -448,17 +445,8 @@ void CServer::initTCP() {
 			std::cout << "TCP: Accept erro: " << strerror(errno) << std::endl;
 			return;
 		}
-
-		/*pid = fork();
-		std::cout << "Processo criado" << std::endl;
-		if( pid == -1 ) {
-			exit(1);
-		} else if( pid == 0 ) { */
 			this->processTCP();
-		/*	std::cout << "TCP: Process done." << std::endl;
-			_exit(0);
-		}*/
-		//Parent process
+		
 
 		do {
 			ret_tcp = close(accept_fd_tcp);
@@ -467,24 +455,19 @@ void CServer::initTCP() {
 		if(ret_tcp==-1) { std::cerr << "Erro no TCP: " << strerror(errno) << std::endl; return; }
 	}
 
-	std::cout << "Sai do ciclo, vai dar merda" << std::endl;
 }
 
 void CServer::retrieveStorage() {
 
 	//Criar directório para o Central Server
-	std::cout << "Abrimos o ficheiro" << std::endl;
 	std::ifstream input( "serverlist.txt" );
 	if( !input.good() ) {
 		std::cerr << "ERRO: Impossível ler ficheiro com a lista de servidores." << std::endl;
 		return;
 	}
 	std::string line;
-	std::cout << "Abrimos o ficheiro" << std::endl;
 
 	while( std::getline(input, line, '\n') ) {
-		std::cout << "Abrimos o ficheiro" << std::endl;
-
 		std::vector< std::string > server2 = split(line, ' ');
 		storages.push_back(server2);
 	}
@@ -558,7 +541,6 @@ void CServer::addFileToList(std::string filename) {
 
 	this->file_list->push_back(filename);
 
-	std::cout << "Ficheiros tem " << this->file_list->size() << std::endl;
 
 	//Actualizamos o ficheiro de texto
 	this->updateFiles();

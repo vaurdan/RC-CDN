@@ -37,12 +37,12 @@ inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
 	float ratio  =  x/(float)n;
 	int   c      =  ratio * w;
 
-	printf("\e[?25l"); /* hide the cursor */
+	printf("\e[?25l"); 
 	std::cout << std::setw(3) << (int)(ratio*100) << "% [" << std::flush;
 	for (int x=0; x<c; x++) std::cout << "=" << std::flush;
 	for (unsigned int x=c; x<w; x++) std::cout << " " << std::flush;
 	std::cout << "]\r" << std::flush;
-	printf("\e[?25h"); /* show the cursor */
+	printf("\e[?25h"); 
 
 }
 
@@ -105,7 +105,7 @@ std::vector<std::string> Client::parse_response(char* buffer) {
 }
 	
 
-
+//processamento do pedido list pelo cliente
 void Client::list() {
 	
 	this->connectionCS(0);
@@ -135,7 +135,7 @@ void Client::list() {
 	
 }
 
-//bool para dizer ao utilizador que ficheiro foi transferido?
+//processamento do pedido retrieve pelo cliente
 void Client::retrieve(std::string file_name){
 
 	FILE *ficheiro_recebido;
@@ -149,7 +149,6 @@ void Client::retrieve(std::string file_name){
 	
 	std::string command = "REQ " + file_name + "\n";
 	connect_id=send(fd_tcp_ss, command.c_str(), command.size(), 0);
-	//std::cout << "connect_id com " << connect_id << std::endl;	
 	if(connect_id ==-1) {
 		std::cout << "Ocorreu um erro:  " << strerror(errno) << std::endl;
 		return;	
@@ -239,7 +238,8 @@ void Client::retrieve(std::string file_name){
 	
  
 	}
-	
+
+//processamento do pedido upload pelo cliente
 void Client::upload(std::string up_file_name){
 	
 	this->connectionCS(1);
@@ -352,7 +352,7 @@ bool Client::connectionCS(int type) {
 	
 	if(type == 0) {
 		// UDP connection to the Central Server
-		fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);//SOCKET DO UPD
+		fd_udp_cs=socket(AF_INET, SOCK_DGRAM, 0);
 		if(fd_udp_cs==-1)
 			return false;
 
@@ -365,17 +365,17 @@ bool Client::connectionCS(int type) {
 	} else if( type == 1) {
 		// TCP connection to the Central Server
 		
-		struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-		struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+		struct addrinfo host_info;       
+		struct addrinfo *host_info_list; 
 
 		memset(&host_info, 0, sizeof host_info);
 
-		host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
-		host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+		host_info.ai_family = AF_INET;     
+		host_info.ai_socktype = SOCK_STREAM;
 
 		int status = getaddrinfo(host_name, cs_port, &host_info, &host_info_list);
 
-		fd_tcp_cs=socket(host_info_list->ai_family, host_info_list->ai_socktype,host_info_list->ai_protocol);//SOCKET do TCP
+		fd_tcp_cs=socket(host_info_list->ai_family, host_info_list->ai_socktype,host_info_list->ai_protocol);
 
 		if(fd_tcp_cs==-1)
 			return false;
@@ -396,18 +396,18 @@ bool Client::connectionSS() {
 	if(this->ss_port == NULL || this->ss_ip == NULL)
 		return false;
 	
-	struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-	struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+	struct addrinfo host_info;       
+	struct addrinfo *host_info_list; 
 
 	memset(&host_info, 0, sizeof host_info);
 	
-	host_info.ai_family = AF_INET;     // IP version not specified. Can be both.
-	host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+	host_info.ai_family = AF_INET;     
+	host_info.ai_socktype = SOCK_STREAM; 
 	
 	int status = getaddrinfo(this->ss_ip, this->ss_port, &host_info, &host_info_list);
 	
 	fd_tcp_ss=socket(host_info_list->ai_family, host_info_list->ai_socktype,
-			   host_info_list->ai_protocol);//SOCKET do TCP
+			   host_info_list->ai_protocol);
 	
 	if(fd_tcp_ss==-1)
 		return false;

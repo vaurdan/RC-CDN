@@ -25,7 +25,6 @@ int main(int argc, char *argv[]){
 		}
 
 	}
-	
 	SServer *sserver = new SServer(ss_port);
 	sserver->startListening();
 		
