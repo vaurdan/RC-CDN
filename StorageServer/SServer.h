@@ -48,7 +48,8 @@ class SServer {
 	SServer(char *port) : ss_port(port) {};
     
     
-	void startListening();
+	bool startListening();
+	bool testConnection();
 	void list_command();
 	void processTCP();
 	void initTCP();

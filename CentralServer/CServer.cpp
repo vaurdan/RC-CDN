@@ -262,12 +262,12 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 
 	this->disconnectSS();
 
-	//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
-	addFileToList( std::string( new_filename ) ) ;
 
 	//Receive the response from SS
 	std::cout << buffer << std::endl;
 	if(sucess_upload) {
+		//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
+		addFileToList( std::string( new_filename ) ) ;
 		std::cout << "TCP: Upload of " << new_filename << " sucessfully..." << std::endl;	
 		result = "AWC ok";
 	} else {
@@ -321,8 +321,8 @@ void CServer::processTCP() {
 
 			//Adiconar um timeout muito curto para caso o ficheiro nao seja encontrado
 			struct timeval timeout;      
-		    timeout.tv_sec = 0;
-		    timeout.tv_usec = 500;
+		    timeout.tv_sec = 1;
+		    timeout.tv_usec = 0;
 			setsockopt(accept_fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout));
 

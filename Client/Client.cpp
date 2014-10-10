@@ -109,10 +109,10 @@ void Client::list() {
 	if(recieve_id==-1)
 		exit(1);
 	
-	std::cout << buffer << std::endl;
 	std::vector<std::string> resposta = parse_response(buffer);
+
 	if(resposta.empty()) {
-		std::cout << "Erro de protocolo" << std::endl;
+		std::cout << "Nenhum ficheiro foi encontrado." << std::endl;
 		return;
 	}
 	
@@ -137,18 +137,22 @@ void Client::retrieve(std::string file_name){
 	this->connectionSS();
 	
 	std::string command = "REQ " + file_name + "\n";
-	connect_id=sendto(fd_tcp_ss, command.c_str(), command.size(), 0, (struct sockaddr*)&addr_tcp_ss, sizeof(addr_tcp_ss));
+	connect_id=send(fd_tcp_ss, command.c_str(), command.size(), 0);
 	//std::cout << "connect_id com " << connect_id << std::endl;	
-	if(connect_id==-1)
-		exit(1);
+	if(connect_id ==-1) {
+		std::cout << "Ocorreu um erro:  " << strerror(errno) << std::endl;
+		return;	
+	}
 
 	// Vamos ver se o comando está correcto
 	bzero(buffer,600);
 	addrlen_tcp_ss=sizeof(addr_tcp_ss);
-	recieve_id=recvfrom(fd_tcp_ss,buffer,4,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	recieve_id=recv(fd_tcp_ss,buffer,4,0);
 
-	if(recieve_id ==-1)
-		exit(1);
+	if(recieve_id ==-1) {
+		std::cout << "Ocorreu um erro:  " << strerror(errno) << std::endl;
+		return;	
+	}
 	
 	//Leitura do comando do servidor
 	if(strcmp (buffer, "ERR\n") == 0){
@@ -158,7 +162,7 @@ void Client::retrieve(std::string file_name){
 	bzero(buffer,100);
 
 	//Leitura de ok ou nok
-	recieve_id=recvfrom(fd_tcp_ss,buffer,3,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+	recieve_id=recv(fd_tcp_ss,buffer,3,0);
 	if(recieve_id ==-1)
 		exit(1);
 	
@@ -186,21 +190,17 @@ void Client::retrieve(std::string file_name){
 
 	}
 	
-	//std::cout << "size_buffer: " << size_buffer << std::endl;
-	std::cout << "buffer: " << buffer << std::endl;
-	
 	file_size = atoi(size_buffer.c_str());
-	char file_buffer[file_size];
+	char file_buffer[128];
 	
 	ficheiro_recebido = fopen(file_name.c_str(), "w");
-	//std::cout << "Iniciei criação do ficheiro" << std::endl;
+
 	if(ficheiro_recebido == NULL){
-		fprintf(stderr, "Falha a abrir o ficheiro --> %s\n", strerror(errno));
-		exit(EXIT_FAILURE);		
+		fprintf(stderr, "Falha a abrir o ficheiro: %s\n", strerror(errno));
+		return;		
 	}
 
 	remain_data = file_size;
-	setbuf(stdout, NULL);
 	
 	int i = 0;
 	int read_amount;
@@ -208,15 +208,21 @@ void Client::retrieve(std::string file_name){
 		read_amount = remain_data;
 		if(read_amount > 128)
 			read_amount = 128;
-	
-		len = recvfrom(fd_tcp_ss,file_buffer,read_amount,0,(struct sockaddr*)&addr_tcp_ss,&addrlen_tcp_ss);
+
+		len = recv(fd_tcp_ss,file_buffer,read_amount,0);
+		if( len == -1) {
+			std::cout << "Ocorreu um erro a receber o ficheiro:  " << strerror(errno) << std::endl;
+			return;	
+		}
+
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
 		i += len;
 		remain_data -= len;
 		loadbar(i, file_size);
 	} while(len > 0 && (remain_data > 0));
+
 	fclose(ficheiro_recebido);
-	std::cout << std::endl << " Done! " << std::endl;
+	std::cout << std::endl << "Done! " << std::endl;
 	
  
 	}
@@ -231,21 +237,19 @@ void Client::upload(std::string up_file_name){
 	
 	std::string command = "UPR " + up_file_name + "\n";
 	connect_id=send(fd_tcp_cs, command.c_str(), command.size(), 0);
-	std::cout << "commando enviado." << std::cout;
+
 	if(connect_id ==-1) {
 		std::cout << "Erro de envio: " << strerror(errno) << std::endl;
 		return;	
 	}
-	std::cout << "reconhecido UPR" << std::endl;
+
 	bzero(buffer,600);
 	recieve_id=recv(fd_tcp_cs,buffer,4,0);
-	std::cout << "receive com: " << recieve_id << std::endl;
+
 	if(recieve_id ==-1) {
 		std::cout << "Erro de recepcao." << std::endl;
 		return;	
 	}
-
-	std::cout << "buffer: " << buffer << std::endl;
 	
 	//Leitura do comando do servidor
 	if(strcmp (buffer, "ERR\n") == 0){
@@ -260,16 +264,11 @@ void Client::upload(std::string up_file_name){
 		std::cout << "Erro de recepcao." << std::endl;
 		return;	
 	}
-
-	std::cout << "buffer: " << buffer << std::endl;
 		
 	if(strcmp(buffer, "dup") == 0){
 		std::cerr << "Erro, ficheiro " << up_file_name << " já existe." << std::endl;
 		return;
 	} else{
-		
-		// TCP reconnection
-//		this->connectionCS(1);
 
 		up_file=fopen(up_file_name.c_str(), "r");
 		if(up_file == NULL){
@@ -278,7 +277,7 @@ void Client::upload(std::string up_file_name){
 		}
 
 		size = this->file_size(fileno(up_file));
-		std::cout << size << std::endl;
+
 		std::ostringstream command_stream;
 		command_stream << "UPC " << size << " ";
 		std::string command = command_stream.str();
@@ -287,37 +286,48 @@ void Client::upload(std::string up_file_name){
 			std::cout << "Erro de envio 2: " << strerror(errno) << std::endl;
 			return;	
 		}
+
 		int tamanho_lido;
+		int i = 0;
 		do{	
 			
 			tamanho_lido = fread(data, 1, 128, up_file);
 			if(tamanho_lido == -1){
-				std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
+				std::cerr << "Ocorreu um erro: " << strerror(errno) << std::endl;
+				return;
 			}
-			std::cout << "Data: " << data << std::endl;
+
 			connect_id=send(fd_tcp_cs, data, tamanho_lido, 0);
 			if(connect_id ==-1) {
-				std::cout << "Erro de envio ciclo: " << strerror(errno) << std::endl;
+				std::cout << "Ocorreu um erro a enviar o bloco: " << strerror(errno) << std::endl;
 				return;	
 			}
 
+			i += tamanho_lido;
+			loadbar(i, size);
+
 		}while(tamanho_lido > 0);
+		fclose(up_file);
 			
-		std::cout << tamanho_lido << std::endl;
 		std::string barra_n = "\n";
 		connect_id=send(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0);
-		if(connect_id ==-1) {
+		if(connect_id ==- 1) {
 			std::cout << "Erro de envio da barra n." << std::endl;
 			return;	
 		}
-		fclose(up_file);
 
 		//Verificar se o ficheiro foi enviado, e responder de acordo com isso
-		recv(fd_tcp_cs, buffer, 6, 0); // recebe AWC ok ou AWC no
+		bzero(buffer,100);
+		recieve_id = recvfrom(fd_tcp_cs,buffer,6,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs); // recebe AWC ok ou AWC no
+
+			
+		std::cout << std::endl << "buffer: " << buffer << std::endl;
+		std::cerr << "receive id: " << recieve_id << std::endl;
+
 		if(strcmp( buffer, "AWC ok" ) == 0) {
 			std::cout << "Ficheiro " << up_file_name << " enviado com sucesso..." << std::endl;	
 		} else {
-			std::cout << "Ocorreu um erro a enviar o  " << up_file_name << "." << std::endl;	
+			std::cout << "Ocorreu um erro a enviar o  " << up_file_name << "." << buffer << std::endl;	
 
 		}
 		

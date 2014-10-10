@@ -50,18 +50,57 @@ std::vector<std::string> SServer::split(const std::string &s, char delim) {
 }
 
 //inicialização dos storage server com a criação das pastas de cada SS e respectivas portas. Iniciação da ligação TCP.
-void SServer::startListening() {
+bool SServer::startListening() {
 	std::cout << ":::: Storage Server ::::" << std::endl;
 	std::cout << ":::: Creating Storage Server Dir ::::" << std::endl;
-	std::string ss_dir = "SS" + std::string(ss_port);
-	std::cout << "Listening on port " << ss_port << "..." << std::endl;
-	
-	//criação das directorias dos vários SS
-	mkdir(ss_dir.c_str(),0755);
+
+	std::cout << "Trying to listen on port " << ss_port << "..." << std::endl;
 	
 	//Start the TCP connection.
 	this->initTCP();
 		
+}
+
+// testa a porta e se nao estiver disponivel, muda
+bool SServer::testConnection() {
+
+	int valid_port = atoi(ss_port);
+
+	if((fd_tcp=socket(AF_INET,SOCK_STREAM,0))==-1) {
+		std::cout << "TCP: Error initializing the socket";
+		exit(EXIT_FAILURE);
+	}
+
+	do {
+		//Actualizamos a porta que vamos testar
+		sprintf(this->ss_port, "%d", valid_port);
+
+		//Iniciamos a ligação
+		memset((void*)&addr_tcp,(int)'\0',sizeof(addr_tcp));
+		addr_tcp.sin_family=AF_INET;
+		addr_tcp.sin_addr.s_addr=htonl(INADDR_ANY);
+		addr_tcp.sin_port=htons(valid_port);
+		
+		//Testamos o bind
+		ret_tcp=bind(fd_tcp,(struct sockaddr*)&addr_tcp,sizeof(addr_tcp));
+		if(ret_tcp == -1) {
+			std::cout << "Binding error on port " << this->ss_port << ": " << strerror(errno) << std::endl;
+			valid_port++;
+			continue;
+		}
+
+		//Já temos ligação.
+		if( listen(fd_tcp,2) == -1) {
+			std::cout << "TCP: Error initializing the listen";
+			exit(EXIT_FAILURE);
+		}
+
+		std::cout << "Listening on port " << this->ss_port << "..." << std::endl;
+		return true;
+
+	} while(ret_tcp == -1);
+
+	return true;
 }
 
 //processamento do comando REQ por consequência do pedido retrieve do user.
@@ -71,7 +110,7 @@ void SServer::REQ_command(std::string fn) {
 
 	int fsize;
 	char *buffer_retrieve;
-	char test[21];
+	char data[128];
 	size_t result;
 	std::string req_response;
 	std::string file_size_result;
@@ -94,37 +133,50 @@ void SServer::REQ_command(std::string fn) {
 		return;		
 	}
 
+	//Primeiro enviamos a primeira parte da mensagem "REP ok SIZE"
 	fseek(req_file, 0, SEEK_END);
 	fsize = ftell (req_file);
-	int new_file_size = fsize;
-	rewind (req_file);
+	rewind (req_file); //volta ao inicio para fazer a leitura
 
-	buffer_retrieve = (char*)malloc (sizeof(char)*fsize);
-	if(buffer_retrieve == NULL){
+	std::stringstream size_string;
+	size_string << fsize;
 
-		fputs("Memory error", stderr);
-		exit(1);
-	}
-	while(fsize != 0){
+	req_response = "REP " + std::string("ok ") + size_string.str() + std::string(" ");
 
-		result= fread (buffer_retrieve,1,fsize,req_file);
-		fsize--;
-
-	}
-
-
-	convert << new_file_size;
-	file_size_result = convert.str();
-	fclose(req_file);
-	
-	req_response = "REP " + std::string("ok ") + file_size_result + std::string(" ") + this->to_string(buffer_retrieve);
-
+	std::cout << "TCP: Sending " << req_response << std::endl;
 	ret_tcp=send(accept_fd_tcp,req_response.c_str(),req_response.size(),0);
 	if(ret_tcp==-1) {
 		std::cout << "TCP: sento error: " << strerror(errno) << std::endl;
 		return;
 	}
 	std::cout << "TCP: Response sent." << std::endl;
+
+	int tamanho_lido;
+	do{	
+		
+		tamanho_lido = fread(data, 1, 128, req_file);
+		if(tamanho_lido == -1){
+			std::cerr << "Tamanho lido deu merda" << strerror(errno) << std::endl;
+		}
+		std::cout << "Data: " << data << std::endl;
+		ret_tcp=send(accept_fd_tcp, data, tamanho_lido, 0);
+		if(ret_tcp ==-1) {
+			std::cout << "Erro de envio ciclo: " << strerror(errno) << std::endl;
+			return;	
+		}
+
+	} while(tamanho_lido > 0);
+		
+	std::cout << tamanho_lido << std::endl;
+	std::string barra_n = "\n";
+	ret_tcp=send(accept_fd_tcp, barra_n.c_str(), barra_n.size(), 0);
+	if(ret_tcp ==-1) {
+		std::cout << "Erro de envio da barra n." << std::endl;
+		return;	
+	}
+	fclose(req_file);
+
+	std::cout << "TCP: Retrieving of file " << fn << " by " << inet_ntoa(addr_tcp.sin_addr) << " done!" << std::endl;
 
  
 }
@@ -259,23 +311,12 @@ void SServer::initTCP() {
 
 	std::cout << "TCP: Initialization..." << std::endl;
 
-	if((fd_tcp=socket(AF_INET,SOCK_STREAM,0))==-1)
-		std::cout << "TCP: Error initializing the socket";
-		
-	memset((void*)&addr_tcp,(int)'\0',sizeof(addr_tcp));
-	addr_tcp.sin_family=AF_INET;
-	addr_tcp.sin_addr.s_addr=htonl(INADDR_ANY);
-	addr_tcp.sin_port=htons(atoi(ss_port));
-	
-	ret_tcp=bind(fd_tcp,(struct sockaddr*)&addr_tcp,sizeof(addr_tcp));
-	if(ret_tcp == -1) {
-		std::cout << "TCP: Binding error: " << strerror(errno) << std::endl;
-		return;
-	}
+	//Testa e inicializa a ligação
+	this->testConnection();
 
-	if( listen(fd_tcp,2) == -1)
-		return;
-
+	//criação das directorias dos vários SS
+	std::string ss_dir = "SS" + std::string(ss_port);
+	mkdir(ss_dir.c_str(),0755);
 
 	while(true) {
 		//Waiting for new connections.

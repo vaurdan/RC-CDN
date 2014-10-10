@@ -1,2 +1,4 @@
 localhost 59000
 localhost 59001
+localhost 59002
+localhost 59003
