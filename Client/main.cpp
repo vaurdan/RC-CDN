@@ -61,16 +61,16 @@ int main(int argc, char *argv[]){
         }
 
     }
-    
-    //std::cout << host_name << ":"  << csport << std::endl;
-    
+        
     //Fazer a ligação ao servidor pelo cliente
     client = new Client(host_name, cs_port);
 
 
     std::cout << "bwsh > ";
     while(std::getline(std::cin, input)){
+
 		std::vector<std::string> in = client->split(input,' ');
+
         if(in.front() == "list") {
 			std::cout << "Listing...." << std::endl;
             client->list();
@@ -80,25 +80,28 @@ int main(int argc, char *argv[]){
 				return 1;
 			}
 			std::cout << "Retrieving...." << std::endl;
-			//std::cout << "File name found: " << in.back() << std::endl;
+
 			client->retrieve(in.back());
 		} else if(in.front() == "upload") {
+
 			if(in.size() == 1){
 				std::cerr << "File name missing" << std::endl;
 				return 1;
 			}
 			std::cout << "Uploading...." << std::endl;
-			//std::cout << "File name found: " << in.back() << std::endl;
+
 			client->upload(in.back());
+
 		} else if(in.front() == "exit") {
-				std::cout << "Bye!" << std::endl;
-				exit(1);
-        	}else{
+			std::cout << "Bye!" << std::endl;
+			exit(1);
+    	}else{
 			std::cout << "Comando mal formulado, por favor tente de novo!" << std::endl;
-			return 1;
-        	}
-       		 std::cout << "bwsh > ";
+			continue;
     	}
+   		std::cout << "bwsh > ";
+    	
+    }
 
 
 

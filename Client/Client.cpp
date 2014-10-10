@@ -20,19 +20,30 @@
 #include <iomanip>
 #include <sys/stat.h>
 #include <iostream>
+#include <math.h>
 #include "Client.h"
 
 inline void Client::loadbar(unsigned int x, unsigned int n, unsigned int w)
 {
-	if ( (x != n) && (x % (n/100+1) != 0) ) return;
-	
+	if( x != n) {
+		if ( (x > n) || (loadbar_acc < ceil(n/w)) ) { 
+			loadbar_acc += 128; 
+			return; 
+		}
+	}
+
+	loadbar_acc = 0;
+
 	float ratio  =  x/(float)n;
 	int   c      =  ratio * w;
-	
-	std::cout << std::setw(3) << (int)(ratio*100) << "% [";
-	for (int x=0; x<c; x++) std::cout << "=";
-	for (unsigned int x=c; x<w; x++) std::cout << " ";
+
+	printf("\e[?25l"); /* hide the cursor */
+	std::cout << std::setw(3) << (int)(ratio*100) << "% [" << std::flush;
+	for (int x=0; x<c; x++) std::cout << "=" << std::flush;
+	for (unsigned int x=c; x<w; x++) std::cout << " " << std::flush;
 	std::cout << "]\r" << std::flush;
+	printf("\e[?25h"); /* show the cursor */
+
 }
 
 /*
@@ -216,9 +227,11 @@ void Client::retrieve(std::string file_name){
 		}
 
 		fwrite(file_buffer, sizeof(char), len, ficheiro_recebido);
-		i += len;
+		i+=len;
 		remain_data -= len;
+
 		loadbar(i, file_size);
+
 	} while(len > 0 && (remain_data > 0));
 
 	fclose(ficheiro_recebido);
@@ -259,13 +272,13 @@ void Client::upload(std::string up_file_name){
 
 	bzero(buffer,100);
 	//Leitura de dup ou new
-	recieve_id=recvfrom(fd_tcp_cs,buffer,3,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
+	recieve_id=recvfrom(fd_tcp_cs,buffer,4,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs);
 	if(recieve_id ==-1) {
 		std::cout << "Erro de recepcao." << std::endl;
 		return;	
 	}
 		
-	if(strcmp(buffer, "dup") == 0){
+	if(strcmp(buffer, "dup\n") == 0){
 		std::cerr << "Erro, ficheiro " << up_file_name << " já existe." << std::endl;
 		return;
 	} else{
@@ -309,8 +322,7 @@ void Client::upload(std::string up_file_name){
 		}while(tamanho_lido > 0);
 		fclose(up_file);
 			
-		std::string barra_n = "\n";
-		connect_id=send(fd_tcp_cs, barra_n.c_str(), barra_n.size(), 0);
+		connect_id=send(fd_tcp_cs, "\n", 1, 0);
 		if(connect_id ==- 1) {
 			std::cout << "Erro de envio da barra n." << std::endl;
 			return;	
@@ -318,17 +330,13 @@ void Client::upload(std::string up_file_name){
 
 		//Verificar se o ficheiro foi enviado, e responder de acordo com isso
 		bzero(buffer,100);
-		recieve_id = recvfrom(fd_tcp_cs,buffer,6,0,(struct sockaddr*)&addr_tcp_cs,&addrlen_tcp_cs); // recebe AWC ok ou AWC no
-
-			
-		std::cout << std::endl << "buffer: " << buffer << std::endl;
-		std::cerr << "receive id: " << recieve_id << std::endl;
+		recieve_id = recv(fd_tcp_cs,buffer,6,0);
+		std::cout << std::endl;
 
 		if(strcmp( buffer, "AWC ok" ) == 0) {
 			std::cout << "Ficheiro " << up_file_name << " enviado com sucesso..." << std::endl;	
 		} else {
 			std::cout << "Ocorreu um erro a enviar o  " << up_file_name << "." << buffer << std::endl;	
-
 		}
 		
 	}

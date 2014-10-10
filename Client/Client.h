@@ -59,9 +59,10 @@ private:
     //Storage Server information
     char *ss_ip;
     char *ss_port;
+    int loadbar_acc;
     
 public:
-    Client( char* hostname, char *port ) : host_name(hostname), cs_port(port) {};
+    Client( char* hostname, char *port ) : host_name(hostname), cs_port(port), loadbar_acc(0) {};
     void list();
     void retrieve(std::string file_name);
     void upload(std::string up_file_name);
@@ -70,7 +71,7 @@ public:
     std::vector<std::string> parse_response(char* buffer);
     bool connectionCS(int type);
     bool connectionSS();
-    static inline void loadbar(unsigned int x, unsigned int n, unsigned int w = 50);
+    inline void loadbar(unsigned int x, unsigned int n, unsigned int w = 50);
     
     //APAGAR DEPOIS
     void testConnection();
