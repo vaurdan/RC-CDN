@@ -94,9 +94,10 @@ int main(int argc, char *argv[]){
 
 		} else if(in.front() == "exit") {
 			std::cout << "Bye!" << std::endl;
+            client->close_all();
 			exit(1);
     	}else{
-			std::cout << "Comando mal formulado, por favor tente de novo!" << std::endl;
+			std::cout << "Comando mal formulado, por favor tente de novo!" << std::endl << "bwsh > ";
 			continue;
     	}
    		std::cout << "bwsh > ";

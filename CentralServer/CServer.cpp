@@ -217,8 +217,6 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 		if(read_amount > 128)
 			read_amount = 128;
 
-		std::cout << "TCP: Sending " << read_amount << " bytes block. Remaining " << remain_data << " bytes" << std::endl;
-
 		//Receber do cliente os os bytes necessarios
 		len = recv(accept_fd_tcp,file_buffer,read_amount,0);
 		if(len == -1) {
@@ -229,7 +227,6 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 		//Enviar para cada SS
 		for (int j = 0 ; j < storages.size(); j++) {
 			// Send to the SS
-			std::cout << storages.size() << " Cheguei aqui j#" << j << std::endl;
 
 			send(fd_tcp_ss[j], file_buffer, len, 0);
 		}

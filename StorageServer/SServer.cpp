@@ -64,7 +64,7 @@ bool SServer::startListening() {
 // testa a porta e se nao estiver disponivel, muda
 bool SServer::testConnection() {
 
-	int valid_port = atoi(ss_port);
+	int valid_port = atoi(this->ss_port);
 
 
 	if((fd_tcp=socket(AF_INET,SOCK_STREAM,0))==-1) {
@@ -74,7 +74,11 @@ bool SServer::testConnection() {
 
 	do {
 		//Actualizamos a porta que vamos testar
-		std::string(ss_port) = this->to_string(valid_port);
+		std::string string_port = this->to_string(valid_port);
+		char temp_port[10];
+		bzero(temp_port,10);
+		strncpy(temp_port, string_port.c_str(), 5);
+		std::cout << "porta tmp:" << temp_port << std::endl;
 
 		//Iniciamos a ligação
 		memset((void*)&addr_tcp,(int)'\0',sizeof(addr_tcp));
@@ -85,7 +89,7 @@ bool SServer::testConnection() {
 		//Testamos o bind
 		ret_tcp=bind(fd_tcp,(struct sockaddr*)&addr_tcp,sizeof(addr_tcp));
 		if(ret_tcp == -1) {
-			std::cout << "Binding error on port " << this->ss_port << ": " << strerror(errno) << std::endl;
+			std::cout << "Binding error on port " << temp_port << ": " << strerror(errno) << std::endl;
 			valid_port++;
 			continue;
 		}
@@ -95,6 +99,9 @@ bool SServer::testConnection() {
 			std::cout << "TCP: Error initializing the listen";
 			exit(EXIT_FAILURE);
 		}
+
+		this->ss_port = (char*)malloc(sizeof(char)*10);
+		strncpy(this->ss_port, temp_port, 10);
 
 		std::cout << "Listening on port " << this->ss_port << "..." << std::endl;
 		return true;
