@@ -26,7 +26,7 @@
 #include "CServer.h"
 #include "../Client/Client.h"
 
- 
+ //isto é só um teste
 template <typename T>
 std::string CServer::to_string(T value)
 {
@@ -77,7 +77,7 @@ void CServer::connectSS() {
 
 	for (std::vector< std::vector<std::string> >::iterator it = storages.begin() ; it != storages.end(); ++it) {
 		std::vector<std::string> server = *it;
-		std::cout << "Connecting to SS #" << i << ": " << server[0] << ":" << server[1] << "..."; 
+		std::cout << "Connecting to SS #" << i << ": " << server[0] << ":" << server[1] << "...";
 		if( this->connectTCP( i++, server[0], server[1] ) )
 			std::cout << " done!" << std::endl;
 		else {
@@ -119,29 +119,29 @@ void CServer::list_command() {
 
 //Inicialização da conexão TCP do CS
 bool CServer::connectTCP(int i, std::string server, std::string port) {
-	
-	
-	struct addrinfo host_info;       
-	struct addrinfo *host_info_list; 
+
+
+	struct addrinfo host_info;
+	struct addrinfo *host_info_list;
 
 	memset(&host_info, 0, sizeof host_info);
-	
-	host_info.ai_family = AF_INET;     
-	host_info.ai_socktype = SOCK_STREAM; 
-	
+
+	host_info.ai_family = AF_INET;
+	host_info.ai_socktype = SOCK_STREAM;
+
 	int status = getaddrinfo(server.c_str(), port.c_str(), &host_info, &host_info_list);
-	
+
 	fd_tcp_ss[i]=socket(host_info_list->ai_family, host_info_list->ai_socktype,
 			   host_info_list->ai_protocol);
-	
+
 	if(fd_tcp_ss[i]==-1)
 		return false;
-	
+
 	status = connect(fd_tcp_ss[i], host_info_list->ai_addr, host_info_list->ai_addrlen);
-	
+
 	if(status == -1 )
 		return false;
-	
+
 	return true;
 }
 
@@ -181,11 +181,11 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 			strncpy(buffer, result.c_str(), result.size());
 			return buffer;
 		}
-	
+
 		nread_tcp=recv(accept_fd_tcp,&letra,1,0);
 		if(letra == ' ')
 			break;
-		
+
 		size_buffer += letra;
 		contador++;
 	}
@@ -230,9 +230,9 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 
 			send(fd_tcp_ss[j], file_buffer, len, 0);
 		}
-		
+
 	} while(len > 0 && (remain_data > 0));
-	
+
 	// Send the \n
 	bool sucess_upload = true;
 	int failed_server;
@@ -241,7 +241,7 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	for (int j = 0 ; j < storages.size(); j++) {
 		bzero(buffers[j], 600);
 		std::string barra_n = "\n";
-		
+
 		send(fd_tcp_ss[j], barra_n.c_str(), barra_n.size(), 0);
 
 		recv(fd_tcp_ss[j], buffer, 6, 0); // recebe AWC ok ou AWC no
@@ -252,9 +252,9 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 			failed_server = j;
 			break;
 		}
-		
+
 	}
-		
+
 
 	this->disconnectSS();
 
@@ -263,10 +263,10 @@ char* CServer::UPC_command(char* buffer, const char* new_filename) {
 	if(sucess_upload) {
 		//SEEEEE está tudo AWS ok adicionamos o ficeiro a lista
 		addFileToList( std::string( new_filename ) ) ;
-		std::cout << "TCP: Upload of " << new_filename << " sucessfully..." << std::endl;	
+		std::cout << "TCP: Upload of " << new_filename << " sucessfully..." << std::endl;
 		result = "AWC ok";
 	} else {
-		std::cout << "TCP: Failed uploading " << new_filename << " on server #" << failed_server << "..." << std::endl;	
+		std::cout << "TCP: Failed uploading " << new_filename << " on server #" << failed_server << "..." << std::endl;
 		result = "AWC nok";
 	}
 	std::cout << "TCP: Upload process done!" << std::endl;
@@ -314,7 +314,7 @@ void CServer::processTCP() {
 			bzero(tcp_buffer,600);
 
 			//Adiconar um timeout muito curto para caso o ficheiro nao seja encontrado
-			struct timeval timeout;      
+			struct timeval timeout;
 		    timeout.tv_sec = 1;
 		    timeout.tv_usec = 0;
 			setsockopt(accept_fd_tcp, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
@@ -336,9 +336,9 @@ void CServer::processTCP() {
 				return;
 			}
 
-			std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl; 
+			std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl;
 		}
-	
+
 	} else {
 		strncpy(tcp_buffer, "ERR\n\0", 5);
 		ret_tcp=send(accept_fd_tcp,tcp_buffer,600,0);
@@ -350,7 +350,7 @@ void CServer::processTCP() {
 	std::cout << "TCP: Response sent: " << tcp_buffer << ";"<<std::endl;
 	}
 
-	
+
 }
 
 void CServer::processUDP() {
@@ -363,7 +363,7 @@ void CServer::processUDP() {
 		return;
 	}
 
-	// Get the IP address of the requestent 
+	// Get the IP address of the requestent
 	int peer_name = getpeername(fd_udp,(struct sockaddr*)&addr_udp,&addrlen_udp);
 
 	if(strcmp(buffer, "LST\n") == 0){
@@ -381,13 +381,13 @@ void CServer::processUDP() {
 }
 
 
-void CServer::initUDP() { 
+void CServer::initUDP() {
 	std::cout << "UDP: Initialization..." << std::endl;
 	if((fd_udp=socket(AF_INET,SOCK_DGRAM,0))==-1) {
 		std::cout << "UDP: Error initializing the socket";
 		return;
 	}
-	
+
 	memset((void*)&addr_udp,(int)'\0',sizeof(addr_udp));
 	addr_udp.sin_family=AF_INET;
 	addr_udp.sin_addr.s_addr=htonl(INADDR_ANY);
@@ -399,10 +399,10 @@ void CServer::initUDP() {
 		return;
 	}
 
-	while(1){	
-		this->processUDP();	
+	while(1){
+		this->processUDP();
 	}
-				
+
 	 //close(fd);
 	 //exit(0);
 }
@@ -413,12 +413,12 @@ void CServer::initTCP() {
 
 	if((fd_tcp=socket(AF_INET,SOCK_STREAM,0))==-1)
 		std::cout << "TCP: Error initializing the socket";
-		
+
 	memset((void*)&addr_tcp,(int)'\0',sizeof(addr_tcp));
 	addr_tcp.sin_family=AF_INET;
 	addr_tcp.sin_addr.s_addr=htonl(INADDR_ANY);
 	addr_tcp.sin_port=htons(atoi(cs_port));
-	
+
 	ret_tcp=bind(fd_tcp,(struct sockaddr*)&addr_tcp,sizeof(addr_tcp));
 	if(ret_tcp == -1) {
 		std::cout << "TCP: Binding error: " << strerror(errno) << std::endl;
@@ -443,7 +443,7 @@ void CServer::initTCP() {
 			return;
 		}
 			this->processTCP();
-		
+
 
 		do {
 			ret_tcp = close(accept_fd_tcp);
@@ -530,10 +530,10 @@ void CServer::addFileToList(std::string filename) {
 
 	//Invertemos o vector para tirar o primeiro ficheiro da lista
 	if(this->file_list->size() > 30) {
-		std::reverse(this->file_list->begin(),this->file_list->end()); 
+		std::reverse(this->file_list->begin(),this->file_list->end());
 		this->file_list->pop_back();
 		//Voltamos a colocar o vector no sentido certo
-		std::reverse(this->file_list->begin(),this->file_list->end()); 
+		std::reverse(this->file_list->begin(),this->file_list->end());
 	}
 
 	this->file_list->push_back(filename);
